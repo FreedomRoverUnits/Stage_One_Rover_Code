@@ -6,6 +6,13 @@
 *.lo
 *.o
 *.obj
+.vscode/
+build/
+.devcontainer/
+sdkconfig
+dependencies.lock
+sdkcongif.old
+managed_components/
 
 # Precompiled Headers
 *.gch
@@ -30,3 +37,4 @@
 *.exe
 *.out
 *.app
+Individual_Component_Code/PWM_Code/blink/sdkconfig.old
