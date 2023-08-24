@@ -54,16 +54,16 @@ void rover_stop(mcpwm_unit_t mcpwm_num, mcpwm_timer_t timer_num_left_wheel, mcpw
 void rover_forward(mcpwm_unit_t mcpwm_num, mcpwm_timer_t timer_num_left_wheel, float duty_cycle_left_wheel, mcpwm_timer_t timer_num_right_wheel, float duty_cycle_right_wheel)
 {
     brushed_motor_forward(mcpwm_num, timer_num_left_wheel, duty_cycle_left_wheel);
-    brushed_motor_forward(mcpwm_num, timer_num_right_wheel, duty_cycle_right_wheel);
+    brushed_motor_backward(mcpwm_num, timer_num_right_wheel, duty_cycle_right_wheel);
 }
 
 /**
  * @brief Rover moves backward
  */
-void rover_backwards(mcpwm_unit_t mcpwm_num, mcpwm_timer_t timer_num_left_wheel, float duty_cycle_left_wheel, mcpwm_timer_t timer_num_right_wheel, float duty_cycle_right_wheel)
+void rover_backward(mcpwm_unit_t mcpwm_num, mcpwm_timer_t timer_num_left_wheel, float duty_cycle_left_wheel, mcpwm_timer_t timer_num_right_wheel, float duty_cycle_right_wheel)
 {
     brushed_motor_backward(mcpwm_num, timer_num_left_wheel, duty_cycle_left_wheel);
-    brushed_motor_backward(mcpwm_num, timer_num_right_wheel, duty_cycle_right_wheel);
+    brushed_motor_forward(mcpwm_num, timer_num_right_wheel, duty_cycle_right_wheel);
 }
 
 /**
