@@ -38,3 +38,4 @@ managed_components/
 *.out
 *.app
 Individual_Component_Code/PWM_Code/blink/sdkconfig.old
+Individual_Component_Header_Files/IMU_Code_Header/sdkconfig.old
