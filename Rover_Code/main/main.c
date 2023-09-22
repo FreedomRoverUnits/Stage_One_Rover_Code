@@ -69,20 +69,21 @@ enum states
   AGENT_DISCONNECTED
 } state;
 
-Encoder motor1_encoder(MOTOR1_ENCODER_A, MOTOR1_ENCODER_B, COUNTS_PER_REV1, MOTOR1_ENCODER_INV);
-Encoder motor2_encoder(MOTOR2_ENCODER_A, MOTOR2_ENCODER_B, COUNTS_PER_REV2, MOTOR2_ENCODER_INV);
-Encoder motor3_encoder(MOTOR3_ENCODER_A, MOTOR3_ENCODER_B, COUNTS_PER_REV3, MOTOR3_ENCODER_INV);
-Encoder motor4_encoder(MOTOR4_ENCODER_A, MOTOR4_ENCODER_B, COUNTS_PER_REV4, MOTOR4_ENCODER_INV);
+// Encoder motor1_encoder(MOTOR1_ENCODER_A, MOTOR1_ENCODER_B, COUNTS_PER_REV1, MOTOR1_ENCODER_INV);
+// Encoder motor2_encoder(MOTOR2_ENCODER_A, MOTOR2_ENCODER_B, COUNTS_PER_REV2, MOTOR2_ENCODER_INV);
+// Encoder motor3_encoder(MOTOR3_ENCODER_A, MOTOR3_ENCODER_B, COUNTS_PER_REV3, MOTOR3_ENCODER_INV);
+// Encoder motor4_encoder(MOTOR4_ENCODER_A, MOTOR4_ENCODER_B, COUNTS_PER_REV4, MOTOR4_ENCODER_INV);
 
-Motor motor1_controller(PWM_FREQUENCY, PWM_BITS, MOTOR1_INV, MOTOR1_PWM, MOTOR1_IN_A, MOTOR1_IN_B);
-Motor motor2_controller(PWM_FREQUENCY, PWM_BITS, MOTOR2_INV, MOTOR2_PWM, MOTOR2_IN_A, MOTOR2_IN_B);
-Motor motor3_controller(PWM_FREQUENCY, PWM_BITS, MOTOR3_INV, MOTOR3_PWM, MOTOR3_IN_A, MOTOR3_IN_B);
-Motor motor4_controller(PWM_FREQUENCY, PWM_BITS, MOTOR4_INV, MOTOR4_PWM, MOTOR4_IN_A, MOTOR4_IN_B);
+// Motor motor1_controller(PWM_FREQUENCY, PWM_BITS, MOTOR1_INV, MOTOR1_PWM, MOTOR1_IN_A, MOTOR1_IN_B);
+// Motor motor2_controller(PWM_FREQUENCY, PWM_BITS, MOTOR2_INV, MOTOR2_PWM, MOTOR2_IN_A, MOTOR2_IN_B);
+// Motor motor3_controller(PWM_FREQUENCY, PWM_BITS, MOTOR3_INV, MOTOR3_PWM, MOTOR3_IN_A, MOTOR3_IN_B);
+// Motor motor4_controller(PWM_FREQUENCY, PWM_BITS, MOTOR4_INV, MOTOR4_PWM, MOTOR4_IN_A, MOTOR4_IN_B);
 
-PID motor1_pid(PWM_MIN, PWM_MAX, K_P, K_I, K_D);
-PID motor2_pid(PWM_MIN, PWM_MAX, K_P, K_I, K_D);
-PID motor3_pid(PWM_MIN, PWM_MAX, K_P, K_I, K_D);
-PID motor4_pid(PWM_MIN, PWM_MAX, K_P, K_I, K_D);
+// PID motor1_pid(PWM_MIN, PWM_MAX, K_P, K_I, K_D);
+// PID motor2_pid(PWM_MIN, PWM_MAX, K_P, K_I, K_D);
+// PID motor3_pid(PWM_MIN, PWM_MAX, K_P, K_I, K_D);
+// PID motor4_pid(PWM_MIN, PWM_MAX, K_P, K_I, K_D);
+PID motor1_pid, motor2_pid;
 
 Kinematics kinematics(
     Kinematics::LINO_BASE, 
@@ -97,8 +98,18 @@ Kinematics kinematics(
 Odometry odometry;
 IMU imu;
 
-void setup() 
+void app_main(void)
 {
+    //setting up Encoders
+    setup_both_encoders();
+
+    //setups both wheels
+    setup_rover_wheels(); 
+
+    //setup pid for both wheels
+    PID_initialize(&motor1_pid,0,100,0,0,0); //left
+    PID_initialize(&motor2_pid,0,100,0,0,0); //right
+
     pinMode(LED_PIN, OUTPUT);
 
     bool imu_ok = imu.init();
@@ -112,10 +123,9 @@ void setup()
     
     Serial.begin(115200);
     set_microros_serial_transports(Serial);
-}
 
-void loop() {
-    switch (state) 
+    while (1) {
+        switch (state) 
     {
         case WAITING_AGENT:
             EXECUTE_EVERY_N_MS(500, state = (RMW_RET_OK == rmw_uros_ping_agent(100, 1)) ? AGENT_AVAILABLE : WAITING_AGENT;);
@@ -140,6 +150,7 @@ void loop() {
             break;
         default:
             break;
+    }
     }
 }
 
@@ -238,10 +249,12 @@ void fullStop()
     twist_msg.linear.y = 0.0;
     twist_msg.angular.z = 0.0;
 
-    motor1_controller.brake();
-    motor2_controller.brake();
-    motor3_controller.brake();
-    motor4_controller.brake();
+    // motor1_controller.brake();
+    // motor2_controller.brake();
+    // motor3_controller.brake();
+    // motor4_controller.brake();
+
+    rover_stop(); //both wheels stop
 }
 
 void moveBase()
@@ -270,10 +283,13 @@ void moveBase()
 
     // the required rpm is capped at -/+ MAX_RPM to prevent the PID from having too much error
     // the PWM value sent to the motor driver is the calculated PID based on required RPM vs measured RPM
-    motor1_controller.spin(motor1_pid.compute(req_rpm.motor1, current_rpm1));
-    motor2_controller.spin(motor2_pid.compute(req_rpm.motor2, current_rpm2));
-    motor3_controller.spin(motor3_pid.compute(req_rpm.motor3, current_rpm3));
-    motor4_controller.spin(motor4_pid.compute(req_rpm.motor4, current_rpm4));
+    // motor1_controller.spin(motor1_pid.compute(req_rpm.motor1, current_rpm1));
+    // motor2_controller.spin(motor2_pid.compute(req_rpm.motor2, current_rpm2));
+    // motor3_controller.spin(motor3_pid.compute(req_rpm.motor3, current_rpm3));
+    // motor4_controller.spin(motor4_pid.compute(req_rpm.motor4, current_rpm4));
+    // compute_pid(&motor1_pid, req_rpm.motor1, current_rpm1); TODO: need to find out what the method spin does
+    // compute_pid(&motor2_pid, req_rpm.motor2, current_rpm2); TODO: need to find out what the method spin does
+
 
     Kinematics::velocities current_vel = kinematics.getVelocities(
         current_rpm1, 
