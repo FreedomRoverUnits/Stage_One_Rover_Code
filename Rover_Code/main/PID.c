@@ -22,7 +22,7 @@ void PID_initialize(PID* pid, float min_val, float max_val, float kp, float ki, 
     pid->kd_ = kd;
 }
 
-double compute(PID* pid, float setpoint, float measured_value)
+double compute_pid(PID* pid, float setpoint, float measured_value)
 {
     double error;
     double pid_value;

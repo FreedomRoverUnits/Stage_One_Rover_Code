@@ -28,7 +28,7 @@ typedef struct PID_{
 
 void PID_initialize(PID* pid,float min_val, float max_val, float kp, float ki, float kd);
 double constrain(double pid_value, float min_val, float max_val);
-double compute(PID* pid, float setpoint, float measured_value);
+double compute_pid(PID* pid, float setpoint, float measured_value);
 void updateConstants(PID* pid, float kp, float ki, float kd);
 
 #endif
