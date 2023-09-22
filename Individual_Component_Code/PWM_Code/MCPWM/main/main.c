@@ -7,21 +7,8 @@
 
 void app_main(void)
 {
-    //1. mcpwm gpio initialization
-    mcpwm_gpio_initialize_both_wheels();
+    setup_rover_wheels();
 
-    //2. initial mcpwm configuration
-    printf("Configuring Initial Parameters of mcpwm...\n");
-    mcpwm_config_t pwm_config;
-    pwm_config.frequency = 500;    //frequency = 500Hz,
-    pwm_config.cmpr_a = 0;    //duty cycle of PWMxA = 0
-    pwm_config.cmpr_b = 0;    //duty cycle of PWMxb = 0
-    pwm_config.counter_mode = MCPWM_UP_COUNTER;
-    pwm_config.duty_mode = MCPWM_DUTY_MODE_0;
-
-    mcpwm_init(MCPWM_UNIT_0, MCPWM_TIMER_0, &pwm_config);   //Configure PWM0A & PWM0B with above settings - Left Wheel
-    mcpwm_init(MCPWM_UNIT_0, MCPWM_TIMER_1, &pwm_config);   //Configure PWM1A & PWM1B with above settings - Right Wheel
-    
     while (1) {
         //This Test that the rover will move forward and backward
         rover_forward(MCPWM_UNIT_0, MCPWM_TIMER_0, 90, MCPWM_TIMER_1,90);

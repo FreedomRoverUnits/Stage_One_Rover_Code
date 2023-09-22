@@ -25,5 +25,8 @@ void rover_backward(mcpwm_unit_t mcpwm_num, mcpwm_timer_t timer_num_left_wheel, 
 void rover_right_turn(void); //place holder for turning right TODO
 void rover_left_turn(void); //place holder for turning left TODO
 
+//setup for rover wheels
+void setup_rover_wheels(void);
+
 
 #endif
