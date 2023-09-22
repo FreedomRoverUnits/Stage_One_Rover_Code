@@ -12,10 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-//#include "Arduino.h"
 #include "PID.h"
 
-void PID_init(PID* pid, float min_val, float max_val, float kp, float ki, float kd){
+void PID_initialize(PID* pid, float min_val, float max_val, float kp, float ki, float kd){
     pid->min_val_ = min_val;
     pid->max_val_ = max_val;
     pid->kp_ = kp;
