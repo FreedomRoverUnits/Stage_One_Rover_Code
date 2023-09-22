@@ -92,3 +92,22 @@ void start_pcnt_for_motors(pcnt_unit_handle_t* motor_A, pcnt_unit_handle_t* moto
     ESP_ERROR_CHECK(pcnt_unit_start(*motor_A));
     ESP_ERROR_CHECK(pcnt_unit_start(*motor_B));
 }
+
+void setup_both_encoders(){
+    // Declare the PCNT unit
+    pcnt_unit_handle_t pcnt_unit_motor_A = NULL;
+    pcnt_unit_handle_t pcnt_unit_motor_B = NULL;
+
+    // Initialize PCNT units for motors
+    create_pcnt_for_motors(&pcnt_unit_motor_A, &pcnt_unit_motor_B);
+
+    // Declare channels/gpios to edit counters
+    pcnt_channel_handle_t pcnt_chan_a = NULL;
+    pcnt_channel_handle_t pcnt_chan_b = NULL;
+
+    // Initialize channels
+    create_pcnt_channels_for_motors(&pcnt_unit_motor_A, &pcnt_unit_motor_B, &pcnt_chan_a, &pcnt_chan_b);
+
+    // Start PCNT units
+    start_pcnt_for_motors(&pcnt_unit_motor_A, &pcnt_unit_motor_B);
+}
