@@ -57,7 +57,7 @@ esp_err_t mpu6050_register_write_byte(uint8_t reg_addr, uint8_t data){
 void calculate_IMU_error(void){
     uint8_t data[2];
 
-    while(c < 400){
+    while(c < 800){
         
         mpu6050_register_read(MPU6050_GYRO_XOUT, data, 2);
         GyroX = (int16_t)((data[0] << 8) | (data[1]));
@@ -71,12 +71,12 @@ void calculate_IMU_error(void){
         GyroErrorZ = GyroErrorZ + (GyroZ / 131.0);
         c++;
     }
-    GyroErrorX = GyroErrorX / 400;
-    GyroErrorY = GyroErrorY / 400;
-    GyroErrorZ = GyroErrorZ / 400;
+    GyroErrorX = GyroErrorX / 800;
+    GyroErrorY = GyroErrorY / 800;
+    GyroErrorZ = GyroErrorZ / 800;
 
     c = 0;
-    while(c < 400){
+    while(c < 800){
         mpu6050_register_read(MPU6050_ACCEL_XOUT, data, 2);
         AccX = (int16_t)((data[0] << 8) | data[1]) / 16384.0;
         mpu6050_register_read(MPU6050_ACCEL_YOUT, data, 2);
@@ -89,8 +89,8 @@ void calculate_IMU_error(void){
 
         c++;
     }
-    AccErrorX = AccErrorX / 400;
-    AccErrorY = AccErrorY / 400;
+    AccErrorX = AccErrorX / 800;
+    AccErrorY = AccErrorY / 800;
 
     ESP_LOGI(TAG_IMU, "AccErrorX: %f", AccErrorX);
     ESP_LOGI(TAG_IMU, "AccErrorY: %f", AccErrorY);
@@ -109,8 +109,8 @@ void calculate_Angles(int64_t elapsed_time, float *ret_roll, float *ret_pitch, f
     mpu6050_register_read(MPU6050_ACCEL_ZOUT, data, 2);
     AccZ = (int16_t)((data[0] << 8) | data[1]) / 16384.0;
 
-    accAngleX = (atan(AccY / sqrt(pow(AccX, 2) + pow(AccZ, 2))) * 180 / M_PI) - 0.58; // AccErrorX ~(0.58) See the calculate_IMU_error()custom function for more details
-    accAngleY = (atan(-1 * AccX / sqrt(pow(AccY, 2) + pow(AccZ, 2))) * 180 / M_PI) + 1.58; // AccErrorY ~(-1.58)
+    accAngleX = (atan(AccY / sqrt(pow(AccX, 2) + pow(AccZ, 2))) * 180 / M_PI) - 2.682687929;//- 0.58; // AccErrorX ~(0.58) See the calculate_IMU_error()custom function for more details
+    accAngleY = (atan(-1 * AccX / sqrt(pow(AccY, 2) + pow(AccZ, 2))) * 180 / M_PI) + 6.097904643;//+ 1.58; // AccErrorY ~(-1.58)
 
     // Elapsed Time here
     previousTime = currentTime;
@@ -124,9 +124,9 @@ void calculate_Angles(int64_t elapsed_time, float *ret_roll, float *ret_pitch, f
     mpu6050_register_read(MPU6050_GYRO_ZOUT, data, 2);
     GyroZ = (int16_t)((data[0] << 8) | data[1]);
 
-    GyroX = (GyroX / 131.0) + 1.56; // GyroErrorX ~(-0.56)
-    GyroY = (GyroY / 131.0) + 2.5; // GyroErrorY ~(2)
-    GyroZ = (GyroZ / 131.0) + 0.8; // GyroErrorZ ~ (-0.8)
+    GyroX = (GyroX / 131.0) + 0.8151635714;//+ 1.56; // GyroErrorX ~(-0.56)
+    GyroY = (GyroY / 131.0) + 2.063793857;//+ 2.5; // GyroErrorY ~(2)
+    GyroZ = (GyroZ / 131.0) + 3.518060286;//+ 0.8; // GyroErrorZ ~ (-0.8)
 
     gyroAngleX = gyroAngleX + (GyroX * local_elaspedTime);//elapsed_time;
     gyroAngleY = gyroAngleY + (GyroY * local_elaspedTime);//elapsed_time;
