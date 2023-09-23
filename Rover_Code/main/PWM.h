@@ -18,6 +18,10 @@ void brushed_motor_forward(mcpwm_unit_t mcpwm_num, mcpwm_timer_t timer_num , flo
 void brushed_motor_backward(mcpwm_unit_t mcpwm_num, mcpwm_timer_t timer_num , float duty_cycle);
 void brushed_motor_stop(mcpwm_unit_t mcpwm_num, mcpwm_timer_t timer_num);
 
+//new methods for pid to call forward/back/stop instead of full rovor
+void spin_dir_left(mcpwm_unit_t mcpwm_num, mcpwm_timer_t timer_num_wheel, float duty_cycle_wheel);
+void spin_dir_right(mcpwm_unit_t mcpwm_num, mcpwm_timer_t timer_num_wheel, float duty_cycle_wheel);
+
 //full rovor body control
 void rover_stop(mcpwm_unit_t mcpwm_num, mcpwm_timer_t timer_num_left_wheel, mcpwm_timer_t timer_num_right_wheel);
 void rover_forward(mcpwm_unit_t mcpwm_num, mcpwm_timer_t timer_num_left_wheel, float duty_cycle_left_wheel, mcpwm_timer_t timer_num_right_wheel, float duty_cycle_right_wheel);

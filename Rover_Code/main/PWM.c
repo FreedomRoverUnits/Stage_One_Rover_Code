@@ -103,3 +103,35 @@ void setup_rover_wheels(void)
     mcpwm_init(MCPWM_UNIT_0, MCPWM_TIMER_0, &pwm_config);   //Configure PWM0A & PWM0B with above settings - Left Wheel
     mcpwm_init(MCPWM_UNIT_0, MCPWM_TIMER_1, &pwm_config);   //Configure PWM1A & PWM1B with above settings - Right Wheel
 }
+
+void spin_dir_left(mcpwm_unit_t mcpwm_num, mcpwm_timer_t timer_num_wheel, float duty_cycle_wheel)
+{
+    if(duty_cycle_wheel>0)
+    {
+        brushed_motor_forward(mcpwm_num, timer_num_wheel, duty_cycle_wheel);
+    }
+    else if(duty_cycle_wheel < 0)
+    {
+        brushed_motor_backward(mcpwm_num, timer_num_left_wheel, abs(duty_cycle_wheel));
+    }
+    else
+    {
+        brushed_motor_stop(mcpwm_num, timer_num_wheel);
+    }
+}
+
+void spin_dir_right(mcpwm_unit_t mcpwm_num, mcpwm_timer_t timer_num_wheel, float duty_cycle_wheel)
+{
+    if(duty_cycle_wheel>0)
+    {
+        brushed_motor_backward(mcpwm_num, timer_num_wheel, duty_cycle_wheel);
+    }
+    else if(duty_cycle_wheel < 0)
+    {        
+        brushed_motor_forward(mcpwm_num, timer_num_left_wheel, abs(duty_cycle_wheel));
+    }
+    else
+    {
+        brushed_motor_stop(mcpwm_num, timer_num_wheel);
+    }
+}
