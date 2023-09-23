@@ -1,6 +1,10 @@
 #ifndef KINEMATICS_H
 #define KINEMATICS_H
 
+#define RPM_TO_RPS 1/60
+
+#include "math.h"
+
 typedef enum L_base {DIFFERENTIAL_DRIVE, SKID_STEER, MECANUM}base;
 
 typedef struct L_rpm
@@ -27,6 +31,7 @@ typedef struct L_pwm
 }R_pwm;
 
 typedef struct L_Kinematics{
+    base base_platform_;
     R_pwm pwm;
     R_velocities velocities;
     R_rpm rpm;
