@@ -3,6 +3,9 @@
 
 #include "esp_log.h"
 #include "driver/i2c.h"
+#include <sensor_msgs/msg/imu.h>
+#include <micro_ros_utilities/type_utilities.h>
+#include <micro_ros_utilities/string_utilities.h>
 
 static const char *TAG_IMU = "IMU_I2C";
 
@@ -29,5 +32,8 @@ esp_err_t mpu6050_register_read(uint8_t reg_addr, uint8_t *data, size_t len);
 esp_err_t mpu6050_register_write_byte(uint8_t reg_addr, uint8_t data);
 void calculate_IMU_error(void);
 void calculate_Angles(int64_t elapsed_time, float* ret_roll, float* ret_pitch, float* ret_yaw);
-
+geometry_msgs__msg__Vector3 readAccelerometer();
+geometry_msgs__msg__Vector3 readGyroscope();
+sensor_msgs__msg__Imu getData();
+void setup_imu(void);
 #endif
