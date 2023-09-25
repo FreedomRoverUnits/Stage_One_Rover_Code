@@ -35,5 +35,5 @@ void calculate_Angles(int64_t elapsed_time, float* ret_roll, float* ret_pitch, f
 geometry_msgs__msg__Vector3 readAccelerometer();
 geometry_msgs__msg__Vector3 readGyroscope();
 sensor_msgs__msg__Imu getData();
-void setup_msg(void);
+void setup_imu(void);
 #endif

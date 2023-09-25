@@ -211,7 +211,18 @@ sensor_msgs__msg__Imu getData(){
     return imu_msg_;
 }
 
-void setup_msg(void){
+void setup_imu(void){
+    uint8_t data[2];
+    ESP_ERROR_CHECK(our_i2c_master_init());
+    ESP_LOGI(TAG_IMU, "I2C initialized successfully");
+
+    ESP_ERROR_CHECK(mpu6050_register_write_byte(MPU6050_PWR_MGMT_1_REG_ADDR, 0));
+
+    ESP_ERROR_CHECK(mpu6050_register_read(MPU6050_WHO_AM_I_REG_ADDR, data, 1));
+    ESP_LOGI(TAG_IMU, "WHO_AM_I = %X", data[0]);
+
+    calculate_IMU_error();
+
     //Call this and calculate error before calling get data
     imu_msg_.header.frame_id = micro_ros_string_utilities_set(imu_msg_.header.frame_id, "imu_link");
 }
