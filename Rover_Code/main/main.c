@@ -27,13 +27,12 @@
 
 #include "config.h"
 #include "PWM.h"
-//#include "kinematics.h"
+#include "Kinematics.h"
 #include "PID.h"
-//#include "odometry.h"
+#include "Odometry.h"
 #include "OUR_IMU.h"
-#define ENCODER_USE_INTERRUPTS
-#define ENCODER_OPTIMIZE_INTERRUPTS
 #include "Encoder.h"
+#include "blink.h"
 
 #define RCCHECK(fn) { rcl_ret_t temp_rc = fn; if((temp_rc != RCL_RET_OK)){rclErrorLoop();}}
 #define RCSOFTCHECK(fn) { rcl_ret_t temp_rc = fn; if((temp_rc != RCL_RET_OK)){}}
@@ -85,72 +84,79 @@ enum states
 // PID motor4_pid(PWM_MIN, PWM_MAX, K_P, K_I, K_D);
 PID motor1_pid, motor2_pid;
 
-Kinematics kinematics(
-    Kinematics::LINO_BASE, 
-    MOTOR_MAX_RPM, 
-    MAX_RPM_RATIO, 
-    MOTOR_OPERATING_VOLTAGE, 
-    MOTOR_POWER_MAX_VOLTAGE, 
-    WHEEL_DIAMETER, 
-    LR_WHEELS_DISTANCE
-);
+// Kinematics kinematics(
+//     Kinematics::LINO_BASE, 
+//     MOTOR_MAX_RPM, 
+//     MAX_RPM_RATIO, 
+//     MOTOR_OPERATING_VOLTAGE, 
+//     MOTOR_POWER_MAX_VOLTAGE, 
+//     WHEEL_DIAMETER, 
+//     LR_WHEELS_DISTANCE
+// );
+Kinematics kinematics;
 
-Odometry odometry;
-IMU imu;
+// Odometry odometry;
+// IMU imu;
 
 void app_main(void)
 {
+    //set up led
+    led_setup();
+
     //setting up Encoders
     setup_both_encoders();
 
     //setups both wheels
-    setup_rover_wheels(); 
+    setup_rover_wheels();
 
     //setup pid for both wheels
     PID_initialize(&motor1_pid,0,100,0,0,0); //left
     PID_initialize(&motor2_pid,0,100,0,0,0); //right
 
-    pinMode(LED_PIN, OUTPUT);
+    //setup IMU
+    setup_imu();
 
-    bool imu_ok = imu.init();
-    if(!imu_ok)
-    {
-        while(1)
-        {
-            flashLED(3);
-        }
-    }
+    // pinMode(LED_PIN, OUTPUT);
+
+    // bool imu_ok = imu.init();
+    // if(!imu_ok)
+    // {
+    //     while(1)
+    //     {
+    //         led_blink(3);
+    //     }
+    // }
     
-    Serial.begin(115200);
-    set_microros_serial_transports(Serial);
+    // Serial.begin(115200);
+    // set_microros_serial_transports(Serial);
 
     while (1) {
         switch (state) 
-    {
-        case WAITING_AGENT:
-            EXECUTE_EVERY_N_MS(500, state = (RMW_RET_OK == rmw_uros_ping_agent(100, 1)) ? AGENT_AVAILABLE : WAITING_AGENT;);
-            break;
-        case AGENT_AVAILABLE:
-            state = (true == createEntities()) ? AGENT_CONNECTED : WAITING_AGENT;
-            if (state == WAITING_AGENT) 
-            {
+        {
+            case WAITING_AGENT:
+                EXECUTE_EVERY_N_MS(500, state = (RMW_RET_OK == rmw_uros_ping_agent(100, 1)) ? AGENT_AVAILABLE : WAITING_AGENT;);
+                break;
+            case AGENT_AVAILABLE:
+                state = (true == createEntities()) ? AGENT_CONNECTED : WAITING_AGENT;
+                if (state == WAITING_AGENT) 
+                {
+                    destroyEntities();
+                }
+                break;
+            case AGENT_CONNECTED:
+                EXECUTE_EVERY_N_MS(200, state = (RMW_RET_OK == rmw_uros_ping_agent(100, 1)) ? AGENT_CONNECTED : AGENT_DISCONNECTED;);
+                if (state == AGENT_CONNECTED) 
+                {
+                    rclc_executor_spin_some(&executor, RCL_MS_TO_NS(100));
+                }
+                break;
+            case AGENT_DISCONNECTED:
                 destroyEntities();
-            }
-            break;
-        case AGENT_CONNECTED:
-            EXECUTE_EVERY_N_MS(200, state = (RMW_RET_OK == rmw_uros_ping_agent(100, 1)) ? AGENT_CONNECTED : AGENT_DISCONNECTED;);
-            if (state == AGENT_CONNECTED) 
-            {
-                rclc_executor_spin_some(&executor, RCL_MS_TO_NS(100));
-            }
-            break;
-        case AGENT_DISCONNECTED:
-            destroyEntities();
-            state = WAITING_AGENT;
-            break;
-        default:
-            break;
-    }
+                state = WAITING_AGENT;
+                break;
+            default:
+                break;
+        }
     }
 }
 
@@ -260,13 +266,13 @@ void fullStop()
 void moveBase()
 {
     // brake if there's no command received, or when it's only the first command sent
-    if(((millis() - prev_cmd_time) >= 200)) 
+    if(((((esp_timer_get_time)/1000) - prev_cmd_time) >= 200)) 
     {
         twist_msg.linear.x = 0.0;
         twist_msg.linear.y = 0.0;
         twist_msg.angular.z = 0.0;
 
-        digitalWrite(LED_PIN, HIGH);
+        // digitalWrite(LED_PIN, HIGH);
     }
     // get the required rpm for each motor based on required velocities, and base used
     Kinematics::rpm req_rpm = kinematics.getRPM(
@@ -287,8 +293,8 @@ void moveBase()
     // motor2_controller.spin(motor2_pid.compute(req_rpm.motor2, current_rpm2));
     // motor3_controller.spin(motor3_pid.compute(req_rpm.motor3, current_rpm3));
     // motor4_controller.spin(motor4_pid.compute(req_rpm.motor4, current_rpm4));
-    // compute_pid(&motor1_pid, req_rpm.motor1, current_rpm1); TODO: need to find out what the method spin does
-    // compute_pid(&motor2_pid, req_rpm.motor2, current_rpm2); TODO: need to find out what the method spin does
+    spin_dir_left(MCPWM_UNIT_0,MCPWM_TIMER_0,compute_pid(&motor1_pid, req_rpm.motor1, current_rpm1));
+    spin_dir_right(MCPWM_UNIT_0,MCPWM_TIMER_1,compute_pid(&motor2_pid, req_rpm.motor2, current_rpm2));
 
 
     Kinematics::velocities current_vel = kinematics.getVelocities(
@@ -352,18 +358,6 @@ void rclErrorLoop()
 {
     while(true)
     {
-        flashLED(2);
+        led_blink(2);
     }
-}
-
-void flashLED(int n_times)
-{
-    for(int i=0; i<n_times; i++)
-    {
-        digitalWrite(LED_PIN, HIGH);
-        delay(150);
-        digitalWrite(LED_PIN, LOW);
-        delay(150);
-    }
-    delay(1000);
 }
