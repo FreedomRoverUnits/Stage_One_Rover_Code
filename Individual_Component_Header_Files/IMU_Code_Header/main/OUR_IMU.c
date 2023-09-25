@@ -15,6 +15,14 @@ float GyroErrorY = 0.0;
 float GyroErrorZ = 0.0;
 int c = 0;
 
+sensor_msgs__msg__Imu imu_msg_;
+const float gyro_scale_ = 1 / 131.0;
+const float g_to_accel_ = 9.81;
+float accel_cov_ = 0.00001;
+float gyro_cov_ = 0.00001;
+geometry_msgs__msg__Vector3 accel_;
+geometry_msgs__msg__Vector3 gyro_;
+
 float local_elaspedTime, previousTime;
 float currentTime = 0.0;
 
@@ -138,4 +146,72 @@ void calculate_Angles(int64_t elapsed_time, float *ret_roll, float *ret_pitch, f
     *ret_yaw = yaw;
     *ret_roll = roll;
     *ret_pitch = pitch;
+}
+
+geometry_msgs__msg__Vector3 readAccelerometer(){
+    int16_t ax, ay, az;
+    uint8_t data[2];
+    
+    mpu6050_register_read(MPU6050_ACCEL_XOUT, data, 2);
+    ax = (int16_t)((data[0] << 8) | data[1]) / 16384.0;
+    mpu6050_register_read(MPU6050_ACCEL_YOUT, data, 2);
+    ay = (int16_t)((data[0] << 8) | data[1]) / 16384.0;
+    mpu6050_register_read(MPU6050_ACCEL_ZOUT, data, 2);
+    az = (int16_t)((data[0] << 8) | data[1]) / 16384.0;
+
+    accel_.x = ax * g_to_accel_;
+    accel_.y = ay * g_to_accel_;
+    accel_.z = az * g_to_accel_;
+
+    return accel_;
+}
+
+geometry_msgs__msg__Vector3 readGyroscope(){
+    int16_t gx, gy, gz;
+    uint8_t data[2];
+
+    mpu6050_register_read(MPU6050_GYRO_XOUT, data, 2);
+    gx = (int16_t)((data[0] << 8) | data[1]);
+    mpu6050_register_read(MPU6050_GYRO_YOUT, data, 2);
+    gy = (int16_t)((data[0] << 8) | data[1]);
+    mpu6050_register_read(MPU6050_GYRO_ZOUT, data, 2);
+    gz = (int16_t)((data[0] << 8) | data[1]);
+
+    gyro_.x = gx * (double) gyro_scale_ * (M_PI / 180);
+    gyro_.y = gy * (double) gyro_scale_ * (M_PI / 180);
+    gyro_.z = gz * (double) gyro_scale_ * (M_PI / 180);
+
+    return gyro_;
+}
+
+sensor_msgs__msg__Imu getData(){
+    imu_msg_.angular_velocity = readGyroscope();
+    imu_msg_.angular_velocity.x -= GyroErrorX;//gyro_cal_.x; 
+    imu_msg_.angular_velocity.y -= GyroErrorY;//gyro_cal_.y; 
+    imu_msg_.angular_velocity.z -= GyroErrorZ;//gyro_cal_.z; 
+
+    if(imu_msg_.angular_velocity.x > -0.01 && imu_msg_.angular_velocity.x < 0.01 )
+    imu_msg_.angular_velocity.x = 0; 
+         
+    if(imu_msg_.angular_velocity.y > -0.01 && imu_msg_.angular_velocity.y < 0.01 )
+    imu_msg_.angular_velocity.y = 0;
+
+    if(imu_msg_.angular_velocity.z > -0.01 && imu_msg_.angular_velocity.z < 0.01 )
+        imu_msg_.angular_velocity.z = 0;
+       
+    imu_msg_.angular_velocity_covariance[0] = gyro_cov_;
+    imu_msg_.angular_velocity_covariance[4] = gyro_cov_;
+    imu_msg_.angular_velocity_covariance[8] = gyro_cov_;
+            
+    imu_msg_.linear_acceleration = readAccelerometer();
+    imu_msg_.linear_acceleration_covariance[0] = accel_cov_;
+    imu_msg_.linear_acceleration_covariance[4] = accel_cov_;
+    imu_msg_.linear_acceleration_covariance[8] = accel_cov_;
+
+    return imu_msg_;
+}
+
+void setup_msg(void){
+    //Call this and calculate error before calling get data
+    imu_msg_.header.frame_id = micro_ros_string_utilities_set(imu_msg_.header.frame_id, "imu_link");
 }
