@@ -10,10 +10,10 @@
 #include "driver/ledc.h"
 #include "esp_err.h"
 
-#define LEDC_TIMER              LEDC_TIMER_1
+#define LEDC_TIMER              LEDC_TIMER_0
 #define LEDC_MODE               LEDC_LOW_SPEED_MODE
 #define LEDC_OUTPUT_IO          (2) // Define the output GPIO
-#define LEDC_CHANNEL            LEDC_CHANNEL_3
+#define LEDC_CHANNEL            LEDC_CHANNEL_0
 #define LEDC_DUTY_RES           LEDC_TIMER_13_BIT // Set duty resolution to 13 bits
 #define LEDC_DUTY               (4095) // Set duty to 50%. ((2 ** 13) - 1) * 50% = 4095
 #define LEDC_FREQUENCY          (5000) // Frequency in Hertz. Set frequency at 5 kHz
@@ -48,24 +48,6 @@ void app_main(void)
     // Set the LEDC peripheral configuration
     example_ledc_init();
     // Set duty to 50%
-    ESP_ERROR_CHECK(ledc_set_duty(LEDC_MODE, LEDC_CHANNEL, LEDC_DUTY));
-    // Update duty to apply the new value
-    ESP_ERROR_CHECK(ledc_update_duty(LEDC_MODE, LEDC_CHANNEL));
-
-    delay(2000);
-
-    ESP_ERROR_CHECK(ledc_set_duty(LEDC_MODE, LEDC_CHANNEL, 70));
-    // Update duty to apply the new value
-    ESP_ERROR_CHECK(ledc_update_duty(LEDC_MODE, LEDC_CHANNEL));
-
-    delay(2000);
-
-    ESP_ERROR_CHECK(ledc_set_duty(LEDC_MODE, LEDC_CHANNEL, LEDC_DUTY));
-    // Update duty to apply the new value
-    ESP_ERROR_CHECK(ledc_update_duty(LEDC_MODE, LEDC_CHANNEL));
-
-    delay(2000);
-
     ESP_ERROR_CHECK(ledc_set_duty(LEDC_MODE, LEDC_CHANNEL, LEDC_DUTY));
     // Update duty to apply the new value
     ESP_ERROR_CHECK(ledc_update_duty(LEDC_MODE, LEDC_CHANNEL));
