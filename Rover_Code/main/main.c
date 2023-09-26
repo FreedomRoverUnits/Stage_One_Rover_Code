@@ -42,6 +42,24 @@
   if (uxr_millis() - init > MS) { X; init = uxr_millis();} \
 } while (0)
 
+//////////////////////// Defines From Lino Config ////////////////////////////////////////
+#define LINO_BASE DIFFERENTIAL_DRIVE       // 2WD and Tracked robot w/ 2 motors
+#define K_P 0.6                             // P constant
+#define K_I 0.8                             // I constant
+#define K_D 0.5                             // D constant
+#define MOTOR_MAX_RPM 140                   // motor's max RPM          
+#define MAX_RPM_RATIO 0.85                  // max RPM allowed for each MAX_RPM_ALLOWED = MOTOR_MAX_RPM * MAX_RPM_RATIO          
+#define MOTOR_OPERATING_VOLTAGE 24          // motor's operating voltage (used to calculate max RPM)
+#define MOTOR_POWER_MAX_VOLTAGE 12          // max voltage of the motor's power source (used to calculate max RPM)
+#define MOTOR_POWER_MEASURED_VOLTAGE 12     // current voltage reading of the power connected to the motor (used for calibration)
+#define COUNTS_PER_REV1 144000              // wheel1 encoder's no of ticks per rev
+#define COUNTS_PER_REV2 144000              // wheel2 encoder's no of ticks per rev
+#define COUNTS_PER_REV3 144000              // wheel3 encoder's no of ticks per rev
+#define COUNTS_PER_REV4 144000              // wheel4 encoder's no of ticks per rev
+#define WHEEL_DIAMETER 0.152                // wheel's diameter in meters
+#define LR_WHEELS_DISTANCE 0.271            // distance between left and right wheels
+
+
 rcl_publisher_t odom_publisher;
 rcl_publisher_t imu_publisher;
 rcl_subscription_t twist_subscriber;
@@ -285,7 +303,7 @@ void moveBase()
     );
 
     // get the current speed of each motor
-    float current_rpm1 = motor1_encoder.getRPM(); //TODO: tuesday!!1!!!!
+    float current_rpm1 = motor1_encoder.getRPM(); //TODO: tuesday!!1!!!! //Get rpm might overflow
     float current_rpm2 = motor2_encoder.getRPM();
     float current_rpm3 = motor3_encoder.getRPM();
     float current_rpm4 = motor4_encoder.getRPM();
