@@ -1,5 +1,8 @@
 #include "Encoder.h"
 
+unsigned long prev_update_time_test = 0;
+unsigned long pre_encoder_ticks_test = 0;
+
 // This creates the setting for the unit counter
 // Essentially setting a limit to the range the counter can be
 pcnt_unit_config_t unit_config = {
@@ -91,6 +94,24 @@ void start_pcnt_for_motors(pcnt_unit_handle_t* motor_A, pcnt_unit_handle_t* moto
     ESP_LOGI(TAG_encoder, "start pcnt unit");
     ESP_ERROR_CHECK(pcnt_unit_start(*motor_A));
     ESP_ERROR_CHECK(pcnt_unit_start(*motor_B));
+}
+
+
+float getRPM(pcnt_unit_handle_t * motor_enc){
+    int encoder_ticks = 0;
+    ESP_ERROR_CHECK(pcnt_unit_get_count(*motor_enc, (&encoder_ticks)));
+
+    unsigned long current_time = esp_timer_get_time();
+    unsigned long dt = current_time - prev_update_time_test;
+
+    double dtm = (double)dt / 6000000;
+    double delta_ticks = encoder_ticks - pre_encoder_ticks_test;
+
+    prev_update_time_test = current_time;
+    pre_encoder_ticks_test = encoder_ticks;
+
+    //20 is the counts_per_rev_ for our encoder
+    return ((delta_ticks / 20) / dtm);
 }
 
 void setup_both_encoders(){
