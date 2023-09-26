@@ -85,18 +85,18 @@ enum states
 PID motor1_pid, motor2_pid;
 
 // Kinematics kinematics(
-//     Kinematics::LINO_BASE, 
-//     MOTOR_MAX_RPM, 
-//     MAX_RPM_RATIO, 
-//     MOTOR_OPERATING_VOLTAGE, 
-//     MOTOR_POWER_MAX_VOLTAGE, 
-//     WHEEL_DIAMETER, 
-//     LR_WHEELS_DISTANCE
+    // Kinematics::LINO_BASE, 
+    // MOTOR_MAX_RPM, 
+    // MAX_RPM_RATIO, 
+    // MOTOR_OPERATING_VOLTAGE, 
+    // MOTOR_POWER_MAX_VOLTAGE, 
+    // WHEEL_DIAMETER, 
+    // LR_WHEELS_DISTANCE
 // );
 Kinematics kinematics;
 
-// Odometry odometry;
-// IMU imu;
+Odometry odometry;
+IMU imu;
 
 void app_main(void)
 {
@@ -112,6 +112,9 @@ void app_main(void)
     //setup pid for both wheels
     PID_initialize(&motor1_pid,0,100,0,0,0); //left
     PID_initialize(&motor2_pid,0,100,0,0,0); //right
+
+    //setup Kinematics 
+    Kinematics_Constructor(&kinematics, LINO_BASE, MOTOR_MAX_RPM, MAX_RPM_RATIO, MOTOR_OPERATING_VOLTAGE, MOTOR_POWER_MAX_VOLTAGE, WHEEL_DIAMETER, LR_WHEELS_DISTANCE);
 
     //setup IMU
     setup_imu();
@@ -165,7 +168,7 @@ void controlCallback(rcl_timer_t * timer, int64_t last_call_time)
     RCLC_UNUSED(last_call_time);
     if (timer != NULL) 
     {
-       moveBase();
+       moveBase(); //one thing todo in this
        publishData();
     }
 }
@@ -275,14 +278,14 @@ void moveBase()
         // digitalWrite(LED_PIN, HIGH);
     }
     // get the required rpm for each motor based on required velocities, and base used
-    Kinematics::rpm req_rpm = kinematics.getRPM(
+    R_rpm req_rpm = getRPM( &kinematics,
         twist_msg.linear.x, 
         twist_msg.linear.y, 
         twist_msg.angular.z
     );
 
     // get the current speed of each motor
-    float current_rpm1 = motor1_encoder.getRPM();
+    float current_rpm1 = motor1_encoder.getRPM(); //TODO: tuesday!!1!!!!
     float current_rpm2 = motor2_encoder.getRPM();
     float current_rpm3 = motor3_encoder.getRPM();
     float current_rpm4 = motor4_encoder.getRPM();
@@ -297,17 +300,18 @@ void moveBase()
     spin_dir_right(MCPWM_UNIT_0,MCPWM_TIMER_1,compute_pid(&motor2_pid, req_rpm.motor2, current_rpm2));
 
 
-    Kinematics::velocities current_vel = kinematics.getVelocities(
+    R_velocities current_vel = getVelocities(&kinematics,
         current_rpm1, 
         current_rpm2, 
         current_rpm3, 
         current_rpm4
     );
 
-    unsigned long now = millis();
+    unsigned long now = ((esp_timer_get_time)/1000);
     float vel_dt = (now - prev_odom_update) / 1000.0;
     prev_odom_update = now;
-    odometry.update(
+    
+    update(&odometry,
         vel_dt, 
         current_vel.linear_x, 
         current_vel.linear_y, 
@@ -317,8 +321,8 @@ void moveBase()
 
 void publishData()
 {
-    odom_msg = odometry.getData();
-    imu_msg = imu.getData();
+    odom_msg = getData(&odometry);
+    imu_msg = getData(&imu); // We left off here TODO: check if getData will recognize the correct one
 
     struct timespec time_stamp = getTime();
 
