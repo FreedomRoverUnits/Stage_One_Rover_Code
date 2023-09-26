@@ -32,7 +32,7 @@ void app_main(void)
     int pulse_count_A = 0;
     int pulse_count_B = 0;
     int ten_sec_mark = 0;
-    while(1){
+    while(1){/*
         if(ten_sec_mark == 10){
             ESP_ERROR_CHECK(pcnt_unit_clear_count(pcnt_unit_motor_A));
             ESP_ERROR_CHECK(pcnt_unit_clear_count(pcnt_unit_motor_B));
@@ -43,6 +43,8 @@ void app_main(void)
         ESP_LOGI(TAG, "Pulse count motor A: %d Pulse count motor B: %d", pulse_count_A, pulse_count_B);
         ten_sec_mark++;
         vTaskDelay(pdMS_TO_TICKS(1000));
-
+        */
+       ESP_LOGI(TAG, "RPM: %f", getRPM(&pcnt_unit_motor_A));
+       vTaskDelay(pdMS_TO_TICKS(1000));
     }
 }
