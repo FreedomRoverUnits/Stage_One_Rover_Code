@@ -112,7 +112,7 @@ void spin_dir_left(mcpwm_unit_t mcpwm_num, mcpwm_timer_t timer_num_wheel, float 
     }
     else if(duty_cycle_wheel < 0)
     {
-        brushed_motor_backward(mcpwm_num, timer_num_left_wheel, abs(duty_cycle_wheel));
+        brushed_motor_backward(mcpwm_num, timer_num_wheel, abs(duty_cycle_wheel));
     }
     else
     {
@@ -128,7 +128,7 @@ void spin_dir_right(mcpwm_unit_t mcpwm_num, mcpwm_timer_t timer_num_wheel, float
     }
     else if(duty_cycle_wheel < 0)
     {        
-        brushed_motor_forward(mcpwm_num, timer_num_left_wheel, abs(duty_cycle_wheel));
+        brushed_motor_forward(mcpwm_num, timer_num_wheel, abs(duty_cycle_wheel));
     }
     else
     {
