@@ -293,7 +293,7 @@ void fullStop()
     // motor3_controller.brake();
     // motor4_controller.brake();
 
-    rover_stop(); //both wheels stop
+    rover_stop(MCPWM_UNIT_0, MCPWM_TIMER_0, MCPWM_TIMER_1); //both wheels stop
 }
 
 void moveBase()
