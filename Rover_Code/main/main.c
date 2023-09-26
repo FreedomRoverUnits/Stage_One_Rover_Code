@@ -24,6 +24,8 @@
 #include <sensor_msgs/msg/imu.h> //????
 #include <geometry_msgs/msg/twist.h>
 #include <geometry_msgs/msg/vector3.h>
+#include "esp_timer.h"
+
 
 #include "config.h"
 #include "PWM.h"
@@ -38,8 +40,8 @@
 #define RCSOFTCHECK(fn) { rcl_ret_t temp_rc = fn; if((temp_rc != RCL_RET_OK)){}}
 #define EXECUTE_EVERY_N_MS(MS, X)  do { \
   static volatile int64_t init = -1; \
-  if (init == -1) { init = uxr_millis();} \
-  if (uxr_millis() - init > MS) { X; init = uxr_millis();} \
+  if (init == -1) { init = millis_time();} \
+  if (millis_time() - init > MS) { X; init = millis_time();} \
 } while (0)
 
 //////////////////////// Defines From Lino Config ////////////////////////////////////////
@@ -115,6 +117,16 @@ Kinematics kinematics;
 
 Odometry odometry;
 IMU imu;
+
+bool destroyEntities(void);
+bool createEntities(void);
+void moveBase(void);
+void publishData(void);
+int64_t millis_time(void);
+struct timespec getTime(void);
+void rclErrorLoop(void);
+void syncTime(void);
+
 
 void app_main(void)
 {
@@ -195,7 +207,7 @@ void twistCallback(const void * msgin)
 {
     digitalWrite(LED_PIN, !digitalRead(LED_PIN));
 
-    prev_cmd_time = millis();
+    prev_cmd_time = millis_time();
 }
 
 bool createEntities()
@@ -287,7 +299,7 @@ void fullStop()
 void moveBase()
 {
     // brake if there's no command received, or when it's only the first command sent
-    if(((((esp_timer_get_time)/1000) - prev_cmd_time) >= 200)) 
+    if(((millis_time()- prev_cmd_time) >= 200)) 
     {
         twist_msg.linear.x = 0.0;
         twist_msg.linear.y = 0.0;
@@ -325,7 +337,7 @@ void moveBase()
         current_rpm4
     );
 
-    unsigned long now = ((esp_timer_get_time)/1000);
+    unsigned long now = millis_time();
     float vel_dt = (now - prev_odom_update) / 1000.0;
     prev_odom_update = now;
     
@@ -357,7 +369,7 @@ void publishData()
 void syncTime()
 {
     // get the current time from the agent
-    unsigned long now = millis();
+    unsigned long now = millis_time();
     RCCHECK(rmw_uros_sync_session(10));
     unsigned long long ros_time_ms = rmw_uros_epoch_millis(); 
     // now we can find the difference between ROS time and uC time
@@ -369,7 +381,7 @@ struct timespec getTime()
     struct timespec tp = {0};
     // add time difference between uC time and ROS time to
     // synchronize time with ROS
-    unsigned long long now = millis() + time_offset;
+    unsigned long long now = millis_time() + time_offset;
     tp.tv_sec = now / 1000;
     tp.tv_nsec = (now % 1000) * 1000000;
 
@@ -382,4 +394,9 @@ void rclErrorLoop()
     {
         led_blink(2);
     }
+}
+
+int64_t millis_time() 
+{
+    return ((esp_timer_get_time())/1000);
 }
