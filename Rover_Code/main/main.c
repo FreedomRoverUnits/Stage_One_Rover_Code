@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //#include <Arduino.h>
-#include <micro_ros_platformio.h>
+//#include <micro_ros_platformio.h>
 #include <stdio.h>
 
 #include <rcl/rcl.h>
@@ -205,7 +205,7 @@ void controlCallback(rcl_timer_t * timer, int64_t last_call_time)
 
 void twistCallback(const void * msgin) 
 {
-    digitalWrite(LED_PIN, !digitalRead(LED_PIN));
+    //digitalWrite(LED_PIN, !digitalRead(LED_PIN));
 
     prev_cmd_time = millis_time();
 }
@@ -259,7 +259,7 @@ bool createEntities()
 
     // synchronize time with the agent
     syncTime();
-    digitalWrite(LED_PIN, HIGH);
+    //digitalWrite(LED_PIN, HIGH);
 
     return true;
 }
@@ -277,7 +277,7 @@ bool destroyEntities()
     rclc_executor_fini(&executor);
     rclc_support_fini(&support);
 
-    digitalWrite(LED_PIN, HIGH);
+    //digitalWrite(LED_PIN, HIGH);
     
     return true;
 }
