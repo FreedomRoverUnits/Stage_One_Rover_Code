@@ -5,7 +5,7 @@
 #include "driver/pulse_cnt.h"
 #include "driver/gpio.h"
 
-static const char *TAG = "Testing Motor Control";
+static const char *TAG_encoder = "Testing Motor Control";
 
 #define PCNT_HIGH_LIMIT 1000
 #define PCNT_LOW_LIMIT  -1000

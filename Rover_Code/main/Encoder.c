@@ -29,19 +29,19 @@ pcnt_glitch_filter_config_t filter_config = {
 void create_pcnt_for_motors(pcnt_unit_handle_t* motor_A, pcnt_unit_handle_t* motor_B){
     // Here we will create the counting unit, this will
     // be used to keep track of the rototary enocoder counts
-    ESP_LOGI(TAG, "Create pcnt unit for Motor A");
+    ESP_LOGI(TAG_encoder, "Create pcnt unit for Motor A");
    
     // Create PCNT unit with unit_config
     ESP_ERROR_CHECK(pcnt_new_unit(&unit_config, motor_A));
 
     // Repeating the same step for Motor B
-    ESP_LOGI(TAG, "Create pcnt unit for Motor B");
+    ESP_LOGI(TAG_encoder, "Create pcnt unit for Motor B");
     ESP_ERROR_CHECK(pcnt_new_unit(&unit_config, motor_B));
 
     // Next the glitch filter is going to be placed
     // this just makes sure we only read stable signals
     // similar to push button debouncing
-    ESP_LOGI(TAG, "Setting Glitch Filters");
+    ESP_LOGI(TAG_encoder, "Setting Glitch Filters");
     ESP_ERROR_CHECK(pcnt_unit_set_glitch_filter(*motor_A, &filter_config));
     ESP_ERROR_CHECK(pcnt_unit_set_glitch_filter(*motor_B, &filter_config));
 }
@@ -49,7 +49,7 @@ void create_pcnt_for_motors(pcnt_unit_handle_t* motor_A, pcnt_unit_handle_t* mot
 void create_pcnt_channels_for_motors(pcnt_unit_handle_t* motor_A, pcnt_unit_handle_t* motor_B, pcnt_channel_handle_t* channel_A, pcnt_channel_handle_t* channel_B){
     // Next is setting up the actual gpio channel that will increment
     // or decrement the counter
-    ESP_LOGI(TAG, "Creating pcnt channels");
+    ESP_LOGI(TAG_encoder, "Creating pcnt channels");
 
     // Create the channel/gpio and tie it to unit counter
     ESP_ERROR_CHECK(pcnt_new_channel(*motor_A, &chan_a_config, channel_A));
@@ -58,7 +58,7 @@ void create_pcnt_channels_for_motors(pcnt_unit_handle_t* motor_A, pcnt_unit_hand
 
     // This section focuses on setting the logic/reaction 
     // to when the gpio/channel recieves a rising edge
-    ESP_LOGI(TAG, "set edge and level actions for pcnt channels");
+    ESP_LOGI(TAG_encoder, "set edge and level actions for pcnt channels");
 
     // On the rising edge (the second arg to pcnt_channel_set_edge_action)
     // the counter will increment while on the falling edge (third arg)
@@ -78,17 +78,17 @@ void start_pcnt_for_motors(pcnt_unit_handle_t* motor_A, pcnt_unit_handle_t* moto
     // zero, and started
     
     // Enable pcnt units for motor A and motor B
-    ESP_LOGI(TAG, "enable pcnt units");
+    ESP_LOGI(TAG_encoder, "enable pcnt units");
     ESP_ERROR_CHECK(pcnt_unit_enable(*motor_A));
     ESP_ERROR_CHECK(pcnt_unit_enable(*motor_B));
 
     // Clear the counter incase there is data left over
-    ESP_LOGI(TAG, "clear pcnt units");
+    ESP_LOGI(TAG_encoder, "clear pcnt units");
     ESP_ERROR_CHECK(pcnt_unit_clear_count(*motor_A));
     ESP_ERROR_CHECK(pcnt_unit_clear_count(*motor_B));
 
     // Start counters
-    ESP_LOGI(TAG, "start pcnt unit");
+    ESP_LOGI(TAG_encoder, "start pcnt unit");
     ESP_ERROR_CHECK(pcnt_unit_start(*motor_A));
     ESP_ERROR_CHECK(pcnt_unit_start(*motor_B));
 }
