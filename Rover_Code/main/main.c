@@ -116,7 +116,7 @@ PID motor1_pid, motor2_pid;
 Kinematics kinematics;
 
 Odometry odometry;
-IMU imu;
+//IMU imu;
 
 bool destroyEntities(void);
 bool createEntities(void);
@@ -228,7 +228,7 @@ bool createEntities()
     RCCHECK(rclc_publisher_init_default( 
         &imu_publisher, 
         &node,
-        ROSIDL_GET_MSG_TYPE_SUPPORT(sensor_msgs, msg, Imu),
+        ROSIDL_GET_MSG_TYPE_SUPPORT(sensor_msgs, msg, Imu), //TODO : double check how this works
         "imu/data"
     ));
     // create twist command subscriber
@@ -352,7 +352,7 @@ void moveBase()
 void publishData()
 {
     odom_msg = getData(&odometry);
-    imu_msg = getData(&imu); // We left off here TODO: check if getData will recognize the correct one
+    imu_msg = getData(); // imu method call
 
     struct timespec time_stamp = getTime();
 
