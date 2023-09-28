@@ -34,6 +34,6 @@ void calculate_IMU_error(void);
 void calculate_Angles(int64_t elapsed_time, float* ret_roll, float* ret_pitch, float* ret_yaw);
 geometry_msgs__msg__Vector3 readAccelerometer();
 geometry_msgs__msg__Vector3 readGyroscope();
-sensor_msgs__msg__Imu getData();
+sensor_msgs__msg__Imu getIMUData();
 void setup_imu(void);
 #endif

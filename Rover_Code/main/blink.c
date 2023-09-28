@@ -15,11 +15,3 @@ void led_blink(int n_times) {
      }
         vTaskDelay(1000 / portTICK_PERIOD_MS);
 }
-
-void app_main(void)
-{
-    led_setup();
-    while(1){
-        led_blink(2);
-    }
-}

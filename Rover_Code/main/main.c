@@ -15,10 +15,16 @@
 //#include <micro_ros_platformio.h>
 #include <stdio.h>
 
+// Micro Ros libraries
+#include <uros_network_interfaces.h>
 #include <rcl/rcl.h>
 #include <rcl/error_handling.h>
 #include <rclc/rclc.h>
 #include <rclc/executor.h>
+#ifdef CONFIG_MICRO_ROS_ESP_XRCE_DDS_MIDDLEWARE
+#include <rmw_microros/rmw_microros.h>
+#endif
+#include <uros_network_interfaces.h>
 
 #include <nav_msgs/msg/odometry.h>
 #include <sensor_msgs/msg/imu.h> //????
@@ -92,6 +98,11 @@ enum states
 // Encoder motor2_encoder(MOTOR2_ENCODER_A, MOTOR2_ENCODER_B, COUNTS_PER_REV2, MOTOR2_ENCODER_INV);
 // Encoder motor3_encoder(MOTOR3_ENCODER_A, MOTOR3_ENCODER_B, COUNTS_PER_REV3, MOTOR3_ENCODER_INV);
 // Encoder motor4_encoder(MOTOR4_ENCODER_A, MOTOR4_ENCODER_B, COUNTS_PER_REV4, MOTOR4_ENCODER_INV);
+// Our Encoder for the motors
+pcnt_unit_handle_t pcnt_unit_motor_1 = NULL;
+pcnt_unit_handle_t pcnt_unit_motor_2 = NULL;
+pcnt_channel_handle_t pcnt_chan_1 = NULL;
+pcnt_channel_handle_t pcnt_chan_2 = NULL;
 
 // Motor motor1_controller(PWM_FREQUENCY, PWM_BITS, MOTOR1_INV, MOTOR1_PWM, MOTOR1_IN_A, MOTOR1_IN_B);
 // Motor motor2_controller(PWM_FREQUENCY, PWM_BITS, MOTOR2_INV, MOTOR2_PWM, MOTOR2_IN_A, MOTOR2_IN_B);
@@ -134,8 +145,8 @@ void app_main(void)
     led_setup();
 
     //setting up Encoders
-    setup_both_encoders();
-
+    setup_both_encoders(&pcnt_unit_motor_1, &pcnt_unit_motor_2, &pcnt_chan_1, &pcnt_chan_2);
+    
     //setups both wheels
     setup_rover_wheels();
 
@@ -308,17 +319,17 @@ void moveBase()
         // digitalWrite(LED_PIN, HIGH);
     }
     // get the required rpm for each motor based on required velocities, and base used
-    R_rpm req_rpm = getRPM( &kinematics,
+    R_rpm req_rpm = getRPM(&kinematics,
         twist_msg.linear.x, 
         twist_msg.linear.y, 
         twist_msg.angular.z
     );
 
     // get the current speed of each motor
-    float current_rpm1 = motor1_encoder.getRPM(); //TODO: tuesday!!1!!!! //Get rpm might overflow
-    float current_rpm2 = motor2_encoder.getRPM();
-    float current_rpm3 = motor3_encoder.getRPM();
-    float current_rpm4 = motor4_encoder.getRPM();
+    float current_rpm1 = getENCODERRPM(&pcnt_unit_motor_1); //TODO: tuesday!!1!!!! //Get rpm might overflow
+    float current_rpm2 = getENCODERRPM(&pcnt_unit_motor_2);
+    float current_rpm3 = 0.0; // Not using these guys make sure we can pass 0.0
+    float current_rpm4 = 0.0;
 
     // the required rpm is capped at -/+ MAX_RPM to prevent the PID from having too much error
     // the PWM value sent to the motor driver is the calculated PID based on required RPM vs measured RPM
@@ -352,7 +363,7 @@ void moveBase()
 void publishData()
 {
     odom_msg = getData(&odometry);
-    imu_msg = getData(); // imu method call
+    imu_msg = getIMUData(); // imu method call
 
     struct timespec time_stamp = getTime();
 

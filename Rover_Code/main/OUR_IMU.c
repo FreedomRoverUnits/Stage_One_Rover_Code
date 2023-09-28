@@ -184,7 +184,7 @@ geometry_msgs__msg__Vector3 readGyroscope(){
     return gyro_;
 }
 
-sensor_msgs__msg__Imu getData(){
+sensor_msgs__msg__Imu getIMUData(){
     imu_msg_.angular_velocity = readGyroscope();
     imu_msg_.angular_velocity.x -= GyroErrorX;//gyro_cal_.x; 
     imu_msg_.angular_velocity.y -= GyroErrorY;//gyro_cal_.y; 

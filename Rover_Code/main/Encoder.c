@@ -97,7 +97,7 @@ void start_pcnt_for_motors(pcnt_unit_handle_t* motor_A, pcnt_unit_handle_t* moto
 }
 
 
-float getRPM(pcnt_unit_handle_t * motor_enc){
+float getENCODERRPM(pcnt_unit_handle_t * motor_enc){
     int encoder_ticks = 0;
     ESP_ERROR_CHECK(pcnt_unit_get_count(*motor_enc, (&encoder_ticks)));
 
@@ -114,21 +114,16 @@ float getRPM(pcnt_unit_handle_t * motor_enc){
     return ((delta_ticks / 20) / dtm);
 }
 
-void setup_both_encoders(){
-    // Declare the PCNT unit
-    pcnt_unit_handle_t pcnt_unit_motor_A = NULL;
-    pcnt_unit_handle_t pcnt_unit_motor_B = NULL;
-
+void setup_both_encoders(pcnt_unit_handle_t * pcnt_unit_motor_A,
+                        pcnt_unit_handle_t * pcnt_unit_motor_B,
+                        pcnt_channel_handle_t * pcnt_chan_a,
+                        pcnt_channel_handle_t * pcnt_chan_b){
     // Initialize PCNT units for motors
-    create_pcnt_for_motors(&pcnt_unit_motor_A, &pcnt_unit_motor_B);
-
-    // Declare channels/gpios to edit counters
-    pcnt_channel_handle_t pcnt_chan_a = NULL;
-    pcnt_channel_handle_t pcnt_chan_b = NULL;
+    create_pcnt_for_motors(pcnt_unit_motor_A, pcnt_unit_motor_B);
 
     // Initialize channels
-    create_pcnt_channels_for_motors(&pcnt_unit_motor_A, &pcnt_unit_motor_B, &pcnt_chan_a, &pcnt_chan_b);
+    create_pcnt_channels_for_motors(pcnt_unit_motor_A, pcnt_unit_motor_B, pcnt_chan_a, pcnt_chan_b);
 
     // Start PCNT units
-    start_pcnt_for_motors(&pcnt_unit_motor_A, &pcnt_unit_motor_B);
+    start_pcnt_for_motors(pcnt_unit_motor_A, pcnt_unit_motor_B);
 }
