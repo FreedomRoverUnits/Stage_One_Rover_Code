@@ -4,7 +4,9 @@ void Odometry_Constructor(Odometry * our_odo){
     our_odo->x_pos_ = 0.0;
     our_odo->y_pos_ = 0.0;
     our_odo->heading_ = 0.0;
+    rosidl_runtime_c__String__init(&(our_odo->odom_msg_.header.frame_id));
     our_odo->odom_msg_.header.frame_id = micro_ros_string_utilities_set(our_odo->odom_msg_.header.frame_id, "odom");
+    rosidl_runtime_c__String__init(&(our_odo->odom_msg_.child_frame_id));
     our_odo->odom_msg_.child_frame_id = micro_ros_string_utilities_set(our_odo->odom_msg_.child_frame_id, "base_footprint");
 }
 

@@ -172,7 +172,7 @@ void app_main(void)
     // }
     
     // Serial.begin(115200);
-    // set_microros_serial_transports(Serial);
+    //set_microros_serial_transports(Serial);
 
     while (1) {
         switch (state) 
