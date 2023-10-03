@@ -4,6 +4,7 @@
 #include <micro_ros_utilities/type_utilities.h>
 #include <micro_ros_utilities/string_utilities.h>
 #include <nav_msgs/msg/odometry.h>
+#include <rosidl_runtime_c/string_functions.h>
 
 typedef struct L_Odometry{
     nav_msgs__msg__Odometry odom_msg_;
