@@ -40,4 +40,4 @@ managed_components/
 Individual_Component_Code/PWM_Code/blink/sdkconfig.old
 Individual_Component_Header_Files/IMU_Code_Header/sdkconfig.old
 Individual_Component_Header_Files/Encoder_Code_Header/sdkconfig.old
-Rover_Code/sdkconfig.old
+*.old
