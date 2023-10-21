@@ -1,5 +1,9 @@
 GPIO Pins in Use:
 GPIO 0, 2 for encoders
 GPIO 21, 22 for Imu 
+
+//gonna change this to 22 and 23 for 16 and 17 
 GPIO 15, 16 for PWM_left wheel
 GPIO 17, 18 for PWM_right wheel
+
+GPIO 17, 16 for Lidar (TX,RX)
