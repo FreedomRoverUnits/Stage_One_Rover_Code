@@ -13,7 +13,14 @@
 // limitations under the License.
 //#include <Arduino.h>
 //#include <micro_ros_platformio.h>
+#include <string.h>
 #include <stdio.h>
+#include <unistd.h>
+
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
+#include "esp_log.h"
+#include "esp_system.h"
 
 // Micro Ros libraries
 #include <uros_network_interfaces.h>
@@ -24,14 +31,12 @@
 #ifdef CONFIG_MICRO_ROS_ESP_XRCE_DDS_MIDDLEWARE
 #include <rmw_microros/rmw_microros.h>
 #endif
-#include <uros_network_interfaces.h>
 
 #include <nav_msgs/msg/odometry.h>
 #include <sensor_msgs/msg/imu.h> //????
 #include <geometry_msgs/msg/twist.h>
 #include <geometry_msgs/msg/vector3.h>
 #include "esp_timer.h"
-
 
 #include "config.h"
 #include "PWM.h"
@@ -44,6 +49,7 @@
 
 #define RCCHECK(fn) { rcl_ret_t temp_rc = fn; if((temp_rc != RCL_RET_OK)){rclErrorLoop();}}
 #define RCSOFTCHECK(fn) { rcl_ret_t temp_rc = fn; if((temp_rc != RCL_RET_OK)){}}
+
 #define EXECUTE_EVERY_N_MS(MS, X)  do { \
   static volatile int64_t init = -1; \
   if (init == -1) { init = millis_time();} \
@@ -94,40 +100,17 @@ enum states
   AGENT_DISCONNECTED
 } state;
 
-// Encoder motor1_encoder(MOTOR1_ENCODER_A, MOTOR1_ENCODER_B, COUNTS_PER_REV1, MOTOR1_ENCODER_INV);
-// Encoder motor2_encoder(MOTOR2_ENCODER_A, MOTOR2_ENCODER_B, COUNTS_PER_REV2, MOTOR2_ENCODER_INV);
-// Encoder motor3_encoder(MOTOR3_ENCODER_A, MOTOR3_ENCODER_B, COUNTS_PER_REV3, MOTOR3_ENCODER_INV);
-// Encoder motor4_encoder(MOTOR4_ENCODER_A, MOTOR4_ENCODER_B, COUNTS_PER_REV4, MOTOR4_ENCODER_INV);
 // Our Encoder for the motors
 pcnt_unit_handle_t pcnt_unit_motor_1 = NULL;
 pcnt_unit_handle_t pcnt_unit_motor_2 = NULL;
 pcnt_channel_handle_t pcnt_chan_1 = NULL;
 pcnt_channel_handle_t pcnt_chan_2 = NULL;
 
-// Motor motor1_controller(PWM_FREQUENCY, PWM_BITS, MOTOR1_INV, MOTOR1_PWM, MOTOR1_IN_A, MOTOR1_IN_B);
-// Motor motor2_controller(PWM_FREQUENCY, PWM_BITS, MOTOR2_INV, MOTOR2_PWM, MOTOR2_IN_A, MOTOR2_IN_B);
-// Motor motor3_controller(PWM_FREQUENCY, PWM_BITS, MOTOR3_INV, MOTOR3_PWM, MOTOR3_IN_A, MOTOR3_IN_B);
-// Motor motor4_controller(PWM_FREQUENCY, PWM_BITS, MOTOR4_INV, MOTOR4_PWM, MOTOR4_IN_A, MOTOR4_IN_B);
-
-// PID motor1_pid(PWM_MIN, PWM_MAX, K_P, K_I, K_D);
-// PID motor2_pid(PWM_MIN, PWM_MAX, K_P, K_I, K_D);
-// PID motor3_pid(PWM_MIN, PWM_MAX, K_P, K_I, K_D);
-// PID motor4_pid(PWM_MIN, PWM_MAX, K_P, K_I, K_D);
 PID motor1_pid, motor2_pid;
 
-// Kinematics kinematics(
-    // Kinematics::LINO_BASE, 
-    // MOTOR_MAX_RPM, 
-    // MAX_RPM_RATIO, 
-    // MOTOR_OPERATING_VOLTAGE, 
-    // MOTOR_POWER_MAX_VOLTAGE, 
-    // WHEEL_DIAMETER, 
-    // LR_WHEELS_DISTANCE
-// );
 Kinematics kinematics;
 
 Odometry odometry;
-//IMU imu;
 
 bool destroyEntities(void);
 bool createEntities(void);
@@ -137,6 +120,48 @@ int64_t millis_time(void);
 struct timespec getTime(void);
 void rclErrorLoop(void);
 void syncTime(void);
+
+static const char *TAG_ERROR = "Debugging Test";
+
+void micro_ros_main_loop(void * arg){
+        state = AGENT_AVAILABLE;
+        while (1) {
+        switch (state) 
+        {
+            case WAITING_AGENT:
+                ESP_LOGI(TAG_ERROR, "wait");
+                EXECUTE_EVERY_N_MS(500, state = (RMW_RET_OK == rmw_uros_ping_agent(100, 1)) ? AGENT_AVAILABLE : WAITING_AGENT;);
+                break;
+            case AGENT_AVAILABLE:
+                ESP_LOGI(TAG_ERROR, "looking for agent");
+                state = (true == createEntities()) ? AGENT_CONNECTED : WAITING_AGENT;
+                if (state == WAITING_AGENT) 
+                {
+                    ESP_LOGI(TAG_ERROR, "agent not found");
+                    destroyEntities();
+                }
+                break;
+            case AGENT_CONNECTED:
+                ESP_LOGI(TAG_ERROR, "found agent");
+                //EXECUTE_EVERY_N_MS(200, state = (RMW_RET_OK == rmw_uros_ping_agent(100, 1)) ? AGENT_CONNECTED : AGENT_DISCONNECTED;);
+                state = AGENT_CONNECTED;
+                if (state == AGENT_CONNECTED) 
+                {
+                    ESP_LOGI(TAG_ERROR, "connecting to agent, spin");
+                    rclc_executor_spin_some(&executor, RCL_MS_TO_NS(100));
+                }
+                break;
+            case AGENT_DISCONNECTED:
+                ESP_LOGI(TAG_ERROR, "destroy");
+                destroyEntities();
+                state = WAITING_AGENT;
+                break;
+            default:
+                ESP_LOGI(TAG_ERROR, "why");
+                break;
+        }
+    }
+}
 
 
 void app_main(void)
@@ -160,48 +185,17 @@ void app_main(void)
     //setup IMU
     setup_imu();
 
-    // pinMode(LED_PIN, OUTPUT);
+    ESP_LOGI(TAG_ERROR, "START");
 
-    // bool imu_ok = imu.init();
-    // if(!imu_ok)
-    // {
-    //     while(1)
-    //     {
-    //         led_blink(3);
-    //     }
-    // }
-    
-    // Serial.begin(115200);
-    //set_microros_serial_transports(Serial);
+    #if defined(CONFIG_MICRO_ROS_ESP_NETIF_WLAN) || defined(CONFIG_MICRO_ROS_ESP_NETIF_ENET)
+    ESP_LOGI(TAG_ERROR, "transport");
+    ESP_ERROR_CHECK(uros_network_interface_initialize());
+    ESP_LOGI(TAG_ERROR, "transport2");
+    #endif
 
-    while (1) {
-        switch (state) 
-        {
-            case WAITING_AGENT:
-                EXECUTE_EVERY_N_MS(500, state = (RMW_RET_OK == rmw_uros_ping_agent(100, 1)) ? AGENT_AVAILABLE : WAITING_AGENT;);
-                break;
-            case AGENT_AVAILABLE:
-                state = (true == createEntities()) ? AGENT_CONNECTED : WAITING_AGENT;
-                if (state == WAITING_AGENT) 
-                {
-                    destroyEntities();
-                }
-                break;
-            case AGENT_CONNECTED:
-                EXECUTE_EVERY_N_MS(200, state = (RMW_RET_OK == rmw_uros_ping_agent(100, 1)) ? AGENT_CONNECTED : AGENT_DISCONNECTED;);
-                if (state == AGENT_CONNECTED) 
-                {
-                    rclc_executor_spin_some(&executor, RCL_MS_TO_NS(100));
-                }
-                break;
-            case AGENT_DISCONNECTED:
-                destroyEntities();
-                state = WAITING_AGENT;
-                break;
-            default:
-                break;
-        }
-    }
+    //state = WAITING_AGENT;
+
+    xTaskCreate(micro_ros_main_loop, "uros_task", 3000, NULL, 5, NULL);
 }
 
 void controlCallback(rcl_timer_t * timer, int64_t last_call_time) 
@@ -223,11 +217,33 @@ void twistCallback(const void * msgin)
 
 bool createEntities()
 {
+
     allocator = rcl_get_default_allocator();
-    //create init_options
-    RCCHECK(rclc_support_init(&support, 0, NULL, &allocator));
+    
+    //Added in by us
+    rcl_init_options_t init_options = rcl_get_zero_initialized_init_options();
+	RCCHECK(rcl_init_options_init(&init_options, allocator));
+
+    #ifdef CONFIG_MICRO_ROS_ESP_XRCE_DDS_MIDDLEWARE
+	rmw_init_options_t* rmw_options = rcl_init_options_get_rmw_init_options(&init_options);
+
+	// Static Agent IP and port can be used instead of autodisvery.
+	RCCHECK(rmw_uros_options_set_udp_address(CONFIG_MICRO_ROS_AGENT_IP, CONFIG_MICRO_ROS_AGENT_PORT, rmw_options));
+
+    //RCCHECK(rmw_uros_discover_agent(rmw_options));
+    #endif
+
+	// create init_options
+	RCCHECK(rclc_support_init_with_options(&support, 0, NULL, &init_options, &allocator));
+
+    //Ends here
+    
+    //create init_options (Needs to be edit to match line 54 in int32 pub example)
+    //RCCHECK(rclc_support_init(&support, 0, NULL, &allocator));
+    
     // create node
     RCCHECK(rclc_node_init_default(&node, "linorobot_base_node", "", &support));
+
     // create odometry publisher
     RCCHECK(rclc_publisher_init_default( 
         &odom_publisher, 
@@ -235,6 +251,7 @@ bool createEntities()
         ROSIDL_GET_MSG_TYPE_SUPPORT(nav_msgs, msg, Odometry),
         "odom/unfiltered"
     ));
+
     // create IMU publisher
     RCCHECK(rclc_publisher_init_default( 
         &imu_publisher, 
@@ -242,6 +259,7 @@ bool createEntities()
         ROSIDL_GET_MSG_TYPE_SUPPORT(sensor_msgs, msg, Imu), //TODO : double check how this works
         "imu/data"
     ));
+
     // create twist command subscriber
     RCCHECK(rclc_subscription_init_default( 
         &twist_subscriber, 
@@ -249,16 +267,23 @@ bool createEntities()
         ROSIDL_GET_MSG_TYPE_SUPPORT(geometry_msgs, msg, Twist),
         "cmd_vel"
     ));
+
     // create timer for actuating the motors at 50 Hz (1000/20)
-    const unsigned int control_timeout = 20;
+    //const unsigned int control_timeout = 20;
+    
+    const unsigned int control_timeout = 1000;
+    
     RCCHECK(rclc_timer_init_default( 
         &control_timer, 
         &support,
         RCL_MS_TO_NS(control_timeout),
         controlCallback
     ));
+
     executor = rclc_executor_get_zero_initialized_executor();
+
     RCCHECK(rclc_executor_init(&executor, &support.context, 2, & allocator));
+
     RCCHECK(rclc_executor_add_subscription(
         &executor, 
         &twist_subscriber, 
@@ -266,6 +291,7 @@ bool createEntities()
         &twistCallback, 
         ON_NEW_DATA
     ));
+
     RCCHECK(rclc_executor_add_timer(&executor, &control_timer));
 
     // synchronize time with the agent
@@ -280,13 +306,13 @@ bool destroyEntities()
     rmw_context_t * rmw_context = rcl_context_get_rmw_context(&support.context);
     (void) rmw_uros_set_context_entity_destroy_session_timeout(rmw_context, 0);
 
-    rcl_publisher_fini(&odom_publisher, &node);
-    rcl_publisher_fini(&imu_publisher, &node);
-    rcl_subscription_fini(&twist_subscriber, &node);
-    rcl_node_fini(&node);
-    rcl_timer_fini(&control_timer);
-    rclc_executor_fini(&executor);
-    rclc_support_fini(&support);
+    RCSOFTCHECK(rcl_publisher_fini(&odom_publisher, &node));
+    RCSOFTCHECK(rcl_publisher_fini(&imu_publisher, &node));
+    RCSOFTCHECK(rcl_subscription_fini(&twist_subscriber, &node));
+    RCSOFTCHECK(rcl_node_fini(&node));
+    RCSOFTCHECK(rcl_timer_fini(&control_timer));
+    RCSOFTCHECK(rclc_executor_fini(&executor));
+    RCSOFTCHECK(rclc_support_fini(&support));
 
     //digitalWrite(LED_PIN, HIGH);
     
@@ -298,11 +324,6 @@ void fullStop()
     twist_msg.linear.x = 0.0;
     twist_msg.linear.y = 0.0;
     twist_msg.angular.z = 0.0;
-
-    // motor1_controller.brake();
-    // motor2_controller.brake();
-    // motor3_controller.brake();
-    // motor4_controller.brake();
 
     rover_stop(MCPWM_UNIT_0, MCPWM_TIMER_0, MCPWM_TIMER_1); //both wheels stop
 }
@@ -333,10 +354,6 @@ void moveBase()
 
     // the required rpm is capped at -/+ MAX_RPM to prevent the PID from having too much error
     // the PWM value sent to the motor driver is the calculated PID based on required RPM vs measured RPM
-    // motor1_controller.spin(motor1_pid.compute(req_rpm.motor1, current_rpm1));
-    // motor2_controller.spin(motor2_pid.compute(req_rpm.motor2, current_rpm2));
-    // motor3_controller.spin(motor3_pid.compute(req_rpm.motor3, current_rpm3));
-    // motor4_controller.spin(motor4_pid.compute(req_rpm.motor4, current_rpm4));
     spin_dir_left(MCPWM_UNIT_0,MCPWM_TIMER_0,compute_pid(&motor1_pid, req_rpm.motor1, current_rpm1));
     spin_dir_right(MCPWM_UNIT_0,MCPWM_TIMER_1,compute_pid(&motor2_pid, req_rpm.motor2, current_rpm2));
 
@@ -381,10 +398,15 @@ void syncTime()
 {
     // get the current time from the agent
     unsigned long now = millis_time();
-    RCCHECK(rmw_uros_sync_session(10));
+
+    //RCCHECK(rmw_uros_sync_session(10));
+    rmw_uros_sync_session(10);
+
     unsigned long long ros_time_ms = rmw_uros_epoch_millis(); 
+
     // now we can find the difference between ROS time and uC time
     time_offset = ros_time_ms - now;
+
 }
 
 struct timespec getTime()
