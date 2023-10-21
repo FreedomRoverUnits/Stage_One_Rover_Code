@@ -26,14 +26,14 @@
  * - Pin assignment: see defines below (See Kconfig)
  */
 
-#define ECHO_TEST_TXD (CONFIG_EXAMPLE_UART_TXD)
-#define ECHO_TEST_RXD (CONFIG_EXAMPLE_UART_RXD)
+#define ECHO_TEST_TXD 1//(CONFIG_EXAMPLE_UART_TXD)
+#define ECHO_TEST_RXD 3//(CONFIG_EXAMPLE_UART_RXD)
 #define ECHO_TEST_RTS (UART_PIN_NO_CHANGE)
 #define ECHO_TEST_CTS (UART_PIN_NO_CHANGE)
 
-#define ECHO_UART_PORT_NUM      (CONFIG_EXAMPLE_UART_PORT_NUM)
-#define ECHO_UART_BAUD_RATE     (CONFIG_EXAMPLE_UART_BAUD_RATE)
-#define ECHO_TASK_STACK_SIZE    (CONFIG_EXAMPLE_TASK_STACK_SIZE)
+#define ECHO_UART_PORT_NUM   0 //(CONFIG_EXAMPLE_UART_PORT_NUM)
+#define ECHO_UART_BAUD_RATE     115200//(CONFIG_EXAMPLE_UART_BAUD_RATE)
+#define ECHO_TASK_STACK_SIZE    1024//(CONFIG_EXAMPLE_TASK_STACK_SIZE)
 
 static const char *TAG = "UART TEST";
 
@@ -63,6 +63,7 @@ static void echo_task(void *arg)
 
     // Configure a temporary buffer for the incoming data
     uint8_t *data = (uint8_t *) malloc(BUF_SIZE);
+    esp_log_level_set(TAG, ESP_LOG_INFO);
 
     while (1) {
         // Read data from the UART
