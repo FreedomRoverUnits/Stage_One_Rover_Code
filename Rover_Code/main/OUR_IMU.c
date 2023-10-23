@@ -105,6 +105,7 @@ void calculate_IMU_error(void){
     ESP_LOGI(TAG_IMU, "GyroErrorX: %f", GyroErrorX);
     ESP_LOGI(TAG_IMU, "GyroErrorY: %f", GyroErrorY);
     ESP_LOGI(TAG_IMU, "GyroErrorZ: %f", GyroErrorZ);
+
 }
 
 void calculate_Angles(int64_t elapsed_time, float *ret_roll, float *ret_pitch, float *ret_yaw){
@@ -149,7 +150,7 @@ void calculate_Angles(int64_t elapsed_time, float *ret_roll, float *ret_pitch, f
 }
 
 geometry_msgs__msg__Vector3 readAccelerometer(){
-    int16_t ax, ay, az;
+    float ax, ay, az;
     uint8_t data[2];
     
     mpu6050_register_read(MPU6050_ACCEL_XOUT, data, 2);
@@ -167,7 +168,7 @@ geometry_msgs__msg__Vector3 readAccelerometer(){
 }
 
 geometry_msgs__msg__Vector3 readGyroscope(){
-    int16_t gx, gy, gz;
+    float gx, gy, gz;
     uint8_t data[2];
 
     mpu6050_register_read(MPU6050_GYRO_XOUT, data, 2);
@@ -186,9 +187,9 @@ geometry_msgs__msg__Vector3 readGyroscope(){
 
 sensor_msgs__msg__Imu getIMUData(){
     imu_msg_.angular_velocity = readGyroscope();
-    imu_msg_.angular_velocity.x -= GyroErrorX;//gyro_cal_.x; 
-    imu_msg_.angular_velocity.y -= GyroErrorY;//gyro_cal_.y; 
-    imu_msg_.angular_velocity.z -= GyroErrorZ;//gyro_cal_.z; 
+    imu_msg_.angular_velocity.x -= GyroErrorX; 
+    imu_msg_.angular_velocity.y -= GyroErrorY; 
+    imu_msg_.angular_velocity.z -= GyroErrorZ; 
 
     if(imu_msg_.angular_velocity.x > -0.01 && imu_msg_.angular_velocity.x < 0.01 )
     imu_msg_.angular_velocity.x = 0; 

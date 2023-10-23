@@ -29,6 +29,7 @@ void app_main(void)
         //calculate_Angles(elaspedTime, &main_roll, &main_pitch, &main_yaw);
 
         //ESP_LOGI(TAG_IMU, "Roll: %f Pitch: %f Yaw: %f", main_roll, main_pitch, main_yaw);
+        calculate_IMU_error();
         //vTaskDelay(pdMS_TO_TICKS(100));
     }
     

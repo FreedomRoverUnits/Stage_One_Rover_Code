@@ -38,7 +38,7 @@
 #include <geometry_msgs/msg/vector3.h>
 #include "esp_timer.h"
 
-#include "config.h"
+//#include "config.h"
 #include "PWM.h"
 #include "Kinematics.h"
 #include "PID.h"
@@ -142,12 +142,12 @@ void micro_ros_main_loop(void * arg){
                 }
                 break;
             case AGENT_CONNECTED:
-                ESP_LOGI(TAG_ERROR, "found agent");
+                //ESP_LOGI(TAG_ERROR, "found agent");
                 //EXECUTE_EVERY_N_MS(200, state = (RMW_RET_OK == rmw_uros_ping_agent(100, 1)) ? AGENT_CONNECTED : AGENT_DISCONNECTED;);
                 state = AGENT_CONNECTED;
                 if (state == AGENT_CONNECTED) 
                 {
-                    ESP_LOGI(TAG_ERROR, "connecting to agent, spin");
+                    //ESP_LOGI(TAG_ERROR, "connecting to agent, spin");
                     rclc_executor_spin_some(&executor, RCL_MS_TO_NS(100));
                 }
                 break;
@@ -185,15 +185,13 @@ void app_main(void)
     //setup IMU
     setup_imu();
 
-    ESP_LOGI(TAG_ERROR, "START");
-
     #if defined(CONFIG_MICRO_ROS_ESP_NETIF_WLAN) || defined(CONFIG_MICRO_ROS_ESP_NETIF_ENET)
     ESP_LOGI(TAG_ERROR, "transport");
     ESP_ERROR_CHECK(uros_network_interface_initialize());
     ESP_LOGI(TAG_ERROR, "transport2");
     #endif
 
-    //state = WAITING_AGENT;
+    state = WAITING_AGENT;
 
     xTaskCreate(micro_ros_main_loop, "uros_task", 3000, NULL, 5, NULL);
 }
@@ -381,6 +379,8 @@ void publishData()
 {
     odom_msg = getData(&odometry);
     imu_msg = getIMUData(); // imu method call
+
+    //calculate_IMU_error();
 
     struct timespec time_stamp = getTime();
 
