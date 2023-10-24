@@ -19,14 +19,10 @@ int ready = 0;
 int num_of_times_it_made_it = 0;
 int did_not_work=0;
 int num_reset = 0;
+const uart_port_t uart_port_numb = UART_NUM_2;
 
-void app_main(void) {
-    esp_log_level_set(TAG, ESP_LOG_INFO);
 
-    ESP_LOGI(TAG, "Setup is starting");
-    //vTaskDelay(10);
-
-    const uart_port_t uart_port_numb = UART_NUM_2;
+void uart_setup(){
     uart_config_t uart_config = {
         .baud_rate = 230400,
         .data_bits = UART_DATA_8_BITS,
@@ -42,10 +38,6 @@ void app_main(void) {
     const int uart_buffer_size = (2520); //TODO: Change this
     ESP_LOGI(TAG, "created uart buffer size");
     //vTaskDelay(10);
-
-    // QueueHandle_t uart_queue;
-    // ESP_LOGI(TAG, "created uart queue");
-    // vTaskDelay(10);
 
     int intr_alloc_flags = 0;
     ESP_LOGI(TAG, "created intr alloc flag variable");
@@ -64,15 +56,31 @@ void app_main(void) {
     ESP_LOGI(TAG, "Setup config");
     //vTaskDelay(10);
 
-    // Set UART pins(TX: IO10, RX: IO9, RTS: -1, CTS: -1)
+    // Set UART2 pins(TX: IO17, RX: IO16, RTS: -1, CTS: -1)
     ESP_ERROR_CHECK(uart_set_pin(uart_port_numb, 17, 16, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE));
     
     ESP_LOGI(TAG, "Setup pins");
     //vTaskDelay(10);
+}
 
-    
+int uart_read(uint8_t *data){
+    return uart_read_bytes(uart_port_numb, data, (BUF_SIZE_U2), 50); 
 
-    size_t size_of_uart2;
+}
+
+int uart_write(char* str){
+    return uart_write_bytes(uart_port_numb, (const char*)str, sizeof(str));
+}
+
+void app_main(void) {
+    esp_log_level_set(TAG, ESP_LOG_INFO);
+
+    ESP_LOGI(TAG, "Setup is starting");
+    //vTaskDelay(10);
+
+    uart_setup();
+
+    size_t uart_read_size;
     
     uint8_t *data = (uint8_t *) malloc(BUF_SIZE_U2);
     ESP_LOGI(TAG, "Setup is done");
@@ -80,17 +88,20 @@ void app_main(void) {
     char* test_str = "b";
     char* test_str_end = "e";
     int error_tx, error_tx_end;
-    error_tx = uart_write_bytes(uart_port_numb, (const char*)test_str, sizeof(test_str));
-    ESP_ERROR_CHECK(uart_wait_tx_done(uart_port_numb,100));
+    //error_tx = uart_write_bytes(uart_port_numb, (const char*)test_str, sizeof(test_str));
+    //ESP_ERROR_CHECK(uart_wait_tx_done(uart_port_numb,100));
+    error_tx = uart_write(test_str_end);
+    
     ESP_LOGI(TAG, "%s, this to start sending data from lidar, this is the size of 'b': %d",test_str, error_tx);
 
 
     while(1) {
         
-        size_of_uart2 = uart_read_bytes(uart_port_numb, data, (BUF_SIZE_U2), 50); 
+        //uart_read_size = uart_read_bytes(uart_port_numb, data, (BUF_SIZE_U2), 50); 
+        uart_read_size = uart_read(data);
         //ESP_LOGI(TAG, "the size of the bytes read: %d", size_of_uart0);
         
-        if(size_of_uart2 > 0){
+        if(uart_read_size > 0){
             sync[0] = data[0];
             sync[1] = data[1];
             //ESP_LOGI(TAG, "Inside the 1st if statement.\n this is what is inside data[0]: %04x\n this is what is inside data[1]: %04x\n", data[0], data[1] );
@@ -139,7 +150,7 @@ void app_main(void) {
             num_of_times_it_made_it++;
             //ESP_LOGI(TAG, "Number of times inside the convers: %d\n", num_of_times_it_made_it);
             //ESP_LOGI(TAG, "at the end of the 3rd if statement\n");
-            //vTaskDelay(10);
+            vTaskDelay(1);
         }  
         else {
             sync[0] = 0;
@@ -153,11 +164,12 @@ void app_main(void) {
         {
             did_not_work =0;
             num_reset++;
-            error_tx_end = uart_write_bytes(uart_port_numb, (const char*)test_str_end, sizeof(test_str_end));
+            //error_tx_end = uart_write_bytes(uart_port_numb, (const char*)test_str_end, sizeof(test_str_end));
+            error_tx_end = uart_write(test_str_end);
             ESP_LOGI(TAG, "Number of resets of lidar: %d\n Current value of conversions: %d", num_reset, num_of_times_it_made_it);
-            vTaskDelay(5);
-            error_tx = uart_write_bytes(uart_port_numb, (const char*)test_str, sizeof(test_str));
-            
+            vTaskDelay(5);                      
+            //error_tx = uart_write_bytes(uart_port_numb, (const char*)test_str, sizeof(test_str));
+            error_tx = uart_write(test_str);
         }
             
         //vTaskDelay(10);
