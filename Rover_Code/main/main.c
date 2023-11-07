@@ -186,9 +186,9 @@ void app_main(void)
     setup_imu();
 
     #if defined(CONFIG_MICRO_ROS_ESP_NETIF_WLAN) || defined(CONFIG_MICRO_ROS_ESP_NETIF_ENET)
-    ESP_LOGI(TAG_ERROR, "transport");
+    //ESP_LOGI(TAG_ERROR, "transport");
     ESP_ERROR_CHECK(uros_network_interface_initialize());
-    ESP_LOGI(TAG_ERROR, "transport2");
+    //ESP_LOGI(TAG_ERROR, "transport2");
     #endif
 
     state = WAITING_AGENT;
@@ -350,7 +350,7 @@ void moveBase()
         twist_msg.angular.z
     );
 
-    ESP_LOGI(TAG_ERROR, "motor1: %f motor2: %f motor3: %f motor4: %f", req_rpm.motor1, req_rpm.motor2, req_rpm.motor3, req_rpm.motor4);
+    //ESP_LOGI(TAG_ERROR, "motor1: %f motor2: %f motor3: %f motor4: %f", req_rpm.motor1, req_rpm.motor2, req_rpm.motor3, req_rpm.motor4);
 
     // get the current speed of each motor
     float current_rpm1 = getENCODERRPM(&pcnt_unit_motor_1); //TODO: tuesday!!1!!!! //Get rpm might overflow
@@ -358,9 +358,9 @@ void moveBase()
     float current_rpm3 = 0.0; // Not using these guys make sure we can pass 0.0
     float current_rpm4 = 0.0;
 
-    ESP_LOGI(TAG_ERROR, "current rpm1: %f current rpm2; %f", current_rpm1, current_rpm2);
-    ESP_LOGI(TAG_ERROR, "Duty Cycle from pid: %lf", compute_pid(&motor1_pid, req_rpm.motor1, current_rpm1));
-    ESP_LOGI(TAG_ERROR, "Duty Cycle from pid: %lf", compute_pid(&motor2_pid, req_rpm.motor2, current_rpm2));
+    //ESP_LOGI(TAG_ERROR, "current rpm1: %f current rpm2; %f", current_rpm1, current_rpm2);
+    //ESP_LOGI(TAG_ERROR, "Duty Cycle from pid: %lf", compute_pid(&motor1_pid, req_rpm.motor1, current_rpm1));
+    //ESP_LOGI(TAG_ERROR, "Duty Cycle from pid: %lf", compute_pid(&motor2_pid, req_rpm.motor2, current_rpm2));
 
     // the required rpm is capped at -/+ MAX_RPM to prevent the PID from having too much error
     // the PWM value sent to the motor driver is the calculated PID based on required RPM vs measured RPM
@@ -374,6 +374,8 @@ void moveBase()
         current_rpm3, 
         current_rpm4
     );
+
+    //ESP_LOGI(TAG_ERROR, "Current rpm1: %f Current rpm2: %f Current rpm3: %f Current rpm4: %f", current_rpm1, current_rpm2, current_rpm3, current_rpm4);
 
     unsigned long now = millis_time();
     float vel_dt = (now - prev_odom_update) / 1000.0;
