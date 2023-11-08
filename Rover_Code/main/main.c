@@ -46,6 +46,7 @@
 #include "OUR_IMU.h"
 #include "Encoder.h"
 #include "blink.h"
+#include "Battery_Sense.h"
 
 #define RCCHECK(fn) { rcl_ret_t temp_rc = fn; if((temp_rc != RCL_RET_OK)){rclErrorLoop();}}
 #define RCSOFTCHECK(fn) { rcl_ret_t temp_rc = fn; if((temp_rc != RCL_RET_OK)){}}
@@ -91,6 +92,8 @@ rcl_timer_t control_timer;
 unsigned long long time_offset = 0;
 unsigned long prev_cmd_time = 0;
 unsigned long prev_odom_update = 0;
+
+bool battery_cutoff = false;
 
 enum states 
 {
@@ -169,6 +172,9 @@ void app_main(void)
     //set up led
     led_setup();
 
+    //setup ADC for battery
+    setup_adc();
+
     //setting up Encoders
     setup_both_encoders(&pcnt_unit_motor_1, &pcnt_unit_motor_2, &pcnt_chan_1, &pcnt_chan_2);
     
@@ -176,8 +182,8 @@ void app_main(void)
     setup_rover_wheels();
 
     //setup pid for both wheels
-    PID_initialize(&motor1_pid,0,100,0.6,0.8,0.5); //left
-    PID_initialize(&motor2_pid,0,100,0.6,0.8,0.5); //right
+    PID_initialize(&motor1_pid,0,100,K_P,K_I,K_D); //left
+    PID_initialize(&motor2_pid,0,100,K_P,K_I,K_D); //right
 
     //setup Kinematics 
     Kinematics_Constructor(&kinematics, LINO_BASE, MOTOR_MAX_RPM, MAX_RPM_RATIO, MOTOR_OPERATING_VOLTAGE, MOTOR_POWER_MAX_VOLTAGE, WHEEL_DIAMETER, LR_WHEELS_DISTANCE);
@@ -339,6 +345,12 @@ void moveBase()
         twist_msg.angular.z = 0.0;
 
         // digitalWrite(LED_PIN, HIGH);
+    }
+
+    //Put battery check Here
+    if(check_battery()){
+        fullStop();
+        led_turn_on();
     }
 
     //ESP_LOGI(TAG_ERROR, "Twist: linear x: %lf linear y: %lf angular z: %lf", twist_msg.linear.x, twist_msg.linear.y, twist_msg.angular.z);
