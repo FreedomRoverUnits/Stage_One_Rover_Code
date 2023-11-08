@@ -19,3 +19,7 @@ void led_blink(int n_times) {
 void led_turn_on(){
     gpio_set_level(BLINK_GPIO, 1);
 }
+
+void led_turn_off(void){
+    gpio_set_level(BLINK_GPIO, 0);
+}

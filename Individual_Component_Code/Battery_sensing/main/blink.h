@@ -7,10 +7,11 @@
 #include "esp_system.h"
 #include "driver/gpio.h"
 
-#define BLINK_GPIO 2 // GPIO pin for the LED (change to your desired GPIO pin)
+#define BLINK_GPIO 27 // GPIO pin for the LED (change to your desired GPIO pin)
 
 void led_setup(void);
 void led_blink(int n_times);
 void led_turn_on(void);
+void led_turn_off(void);
 
 #endif
