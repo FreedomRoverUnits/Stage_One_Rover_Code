@@ -339,7 +339,7 @@ void moveBase()
     //if(((millis_time()- prev_cmd_time) >= 200)) 
     if(((millis_time() - prev_cmd_time) >= 1000))
     {
-        ESP_LOGI(TAG_ERROR, "Millis: %lli pre_cmd_time %lu", millis_time(),  prev_cmd_time);
+        //ESP_LOGI(TAG_ERROR, "Millis: %lli pre_cmd_time %lu", millis_time(),  prev_cmd_time);
         twist_msg.linear.x = 0.0;
         twist_msg.linear.y = 0.0;
         twist_msg.angular.z = 0.0;
@@ -351,6 +351,7 @@ void moveBase()
     if(check_battery()){
         fullStop();
         led_turn_on();
+        ESP_LOGI(TAG_ERROR, "Battery just ooofffed");
     }
 
     //ESP_LOGI(TAG_ERROR, "Twist: linear x: %lf linear y: %lf angular z: %lf", twist_msg.linear.x, twist_msg.linear.y, twist_msg.angular.z);
@@ -370,9 +371,9 @@ void moveBase()
     float current_rpm3 = 0.0; // Not using these guys make sure we can pass 0.0
     float current_rpm4 = 0.0;
 
-    ESP_LOGI(TAG_ERROR, "current rpm1: %f current rpm2; %f", current_rpm1, current_rpm2);
-    ESP_LOGI(TAG_ERROR, "Duty Cycle from pid: %lf", compute_pid(&motor1_pid, req_rpm.motor1, current_rpm1));
-    ESP_LOGI(TAG_ERROR, "Duty Cycle from pid: %lf", compute_pid(&motor2_pid, req_rpm.motor2, current_rpm2));
+    //ESP_LOGI(TAG_ERROR, "current rpm1: %f current rpm2; %f", current_rpm1, current_rpm2);
+    //ESP_LOGI(TAG_ERROR, "Duty Cycle from pid: %lf", compute_pid(&motor1_pid, req_rpm.motor1, current_rpm1));
+    //ESP_LOGI(TAG_ERROR, "Duty Cycle from pid: %lf", compute_pid(&motor2_pid, req_rpm.motor2, current_rpm2));
 
     // the required rpm is capped at -/+ MAX_RPM to prevent the PID from having too much error
     // the PWM value sent to the motor driver is the calculated PID based on required RPM vs measured RPM

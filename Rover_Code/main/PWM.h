@@ -7,9 +7,9 @@
 static const char *TAG = "Testing PWM/Speed Motor Control";
 
 #define LEFT_WHEEL_R 15
-#define LEFT_WHEEL_B 16
+#define LEFT_WHEEL_B 4
 
-#define RIGHT_WHEEL_R 17
+#define RIGHT_WHEEL_R 19
 #define RIGHT_WHEEL_B 18
 
 //motor control
