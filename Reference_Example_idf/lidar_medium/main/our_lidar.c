@@ -125,24 +125,33 @@ void app_main(void) {
         if (ready == 1) {
             //ESP_LOGI(TAG, "Inside the 3rd if statement\n");
             //vTaskDelay(5);
-            for (int i = 0; i < 2520; i = i + 42) {
+            for (uint16_t i = 0; i < 2520; i = i + 42) {
                 if (frame[i] == 0xFA && frame[(i + 1)] == 0xA0 + (i / 42)) {
                     //ESP_LOGI(TAG, "Inside the frame calculation\n");
                     
-                    for (int j = i + 4; j < i + 40; j = j + 6) {
-                    int rangeA = frame[j + 2];
-                    int rangeB = frame[j + 3];
-                    int Degrees = 6 * (i / 42) + (j - 4 - i) / 6;
-                    int range = (rangeB << 8) + rangeA;
-                    if (Degrees != 0 && range != 0) {
-                            float Radians = (Degrees * M_PI) / 180;
-                            float x = range * cos(Radians);
-                            float y = range * sin(Radians);
-                            //printf("%f , %f \n", x, y);
-                            //ESP_LOGI(TAG, "x,y: %f , %f \n", x,y);
-                            //vTaskDelay(10);
-                        }
-                    }
+                    for (uint16_t j = i + 4; j < i + 40; j = j + 6) {
+                    
+                    index = 6*(i/42) + (j-4-i)/6;
+
+                    uint8_t rangeA = frame[j + 2];
+                    uint8_t rangeB = frame[j + 3];
+                    uint8_t rangeC = frame[j];
+                    uint8_t rangeD = frame[j+1];
+
+                    //int Degrees = 6 * (i / 42) + (j - 4 - i) / 6;
+                    uint16_t range = (rangeB << 8) + rangeA;
+                    uint16_t intensity = (rangeD << 8) + rangeC; 
+                    
+                    
+                    // if (Degrees != 0 && range != 0) {
+                    //         // float Radians = (Degrees * M_PI) / 180;
+                    //         // float x = range * cos(Radians);
+                    //         // float y = range * sin(Radians);
+                    //         //printf("%f , %f \n", x, y);
+                    //         //ESP_LOGI(TAG, "x,y: %f , %f \n", x,y);
+                    //         //vTaskDelay(10);
+                    //     }
+                    // }
                 }
             }
 
