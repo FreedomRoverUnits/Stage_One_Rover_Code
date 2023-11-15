@@ -34,6 +34,7 @@
 
 #include <nav_msgs/msg/odometry.h>
 #include <sensor_msgs/msg/imu.h> //????
+#include <sensor_msgs/msg/laser_scan.h> //????//
 #include <geometry_msgs/msg/twist.h>
 #include <geometry_msgs/msg/vector3.h>
 #include "esp_timer.h"
@@ -47,6 +48,8 @@
 #include "Encoder.h"
 #include "blink.h"
 #include "Battery_Sense.h"
+#include "our_lidar.h"
+
 
 #define RCCHECK(fn) { rcl_ret_t temp_rc = fn; if((temp_rc != RCL_RET_OK)){rclErrorLoop();}}
 #define RCSOFTCHECK(fn) { rcl_ret_t temp_rc = fn; if((temp_rc != RCL_RET_OK)){}}
@@ -77,11 +80,15 @@
 
 rcl_publisher_t odom_publisher;
 rcl_publisher_t imu_publisher;
+// rcl_publisher_t lid_publisher; //??????
 rcl_subscription_t twist_subscriber;
+// publisher for lidar is in our_lidar.c file called lidar_publisher
 
 nav_msgs__msg__Odometry odom_msg;
 sensor_msgs__msg__Imu imu_msg;
+// sensor_msgs__msg__LaserScan lid_msg;
 geometry_msgs__msg__Twist twist_msg;
+//lidar message is in our_lidar.c file called lidar_msg_
 
 rclc_executor_t executor;
 rclc_support_t support;
@@ -191,6 +198,9 @@ void app_main(void)
     //setup IMU
     setup_imu();
 
+    //Lidar setup
+    lidar_setup();
+
     #if defined(CONFIG_MICRO_ROS_ESP_NETIF_WLAN) || defined(CONFIG_MICRO_ROS_ESP_NETIF_ENET)
     //ESP_LOGI(TAG_ERROR, "transport");
     ESP_ERROR_CHECK(uros_network_interface_initialize());
@@ -200,6 +210,14 @@ void app_main(void)
     state = WAITING_AGENT;
 
     xTaskCreate(micro_ros_main_loop, "uros_task", 3000, NULL, 5, NULL);
+
+    //lidar task (update data for 16000(stack) and 5(priority) should I change this?)
+    xTaskCreate(micro_ros_task,
+        "uros_task",
+        16000,
+        NULL,
+        5,
+        NULL);
 }
 
 void controlCallback(rcl_timer_t * timer, int64_t last_call_time) 
