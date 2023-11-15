@@ -1,8 +1,11 @@
 GPIO Pins in Use:
-GPIO 0, 2 for encoders
+GPIO 14, 12 for encoders
 GPIO 21, 22 for Imu 
 
 GPIO 15, 4 for PWM_left wheel (IN1,IN2)
 GPIO 19, 18 for PWM_right wheel (IN3, IN4)
 
 GPIO 17, 16 for Lidar (TX [connect to green wire],RX [connect to brown wire])
+
+GPIO 32 Battery Sense
+GPIO 27 Battery LED Warning Indicator
