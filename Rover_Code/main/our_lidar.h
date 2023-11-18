@@ -25,7 +25,7 @@
 #include <micro_ros_utilities/string_utilities.h>
 #include <rosidl_runtime_c/string_functions.h>
 
-static const char *TAG = "UART Lidar test";
+static const char *TAG_LIDAR = "UART Lidar test";
 
 #define BUF_SIZE_U2 (2520)
 #define RCCHECK(fn) { rcl_ret_t temp_rc = fn; if((temp_rc != RCL_RET_OK)){printf("Failed status on line %d: %d. Aborting.\n",__LINE__,(int)temp_rc);vTaskDelete(NULL);}}
@@ -37,10 +37,10 @@ static const char *TAG = "UART Lidar test";
 void uart_setup();
 int uart_read(uint8_t* data);
 int uart_write(char* str);
-void poll_lidar(void);
+void poll_lidar(sensor_msgs__msg__LaserScan * lidar_msg_);
 void RCL_Lidar_setup();
-void timer_callback(rcl_timer_t * timer, int64_t last_call_time);
-void micro_ros_task(void * arg);
-void lidar_setup(void);
+// void timer_callback(rcl_timer_t * timer, int64_t last_call_time, sensor_msgs__msg__LaserScan * lidar_msg_);
+//void micro_ros_task(void * arg);
+void lidar_setup(sensor_msgs__msg__LaserScan * lidar_msg_);
 
 #endif
