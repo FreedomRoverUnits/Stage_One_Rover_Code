@@ -29,9 +29,11 @@ void app_main(void)
     start_pcnt_for_motors(&pcnt_unit_motor_A, &pcnt_unit_motor_B);
 
     // Here is where the counts printed to monitor
-    int pulse_count_A = 0;
-    int pulse_count_B = 0;
-    int ten_sec_mark = 0;
+    //int pulse_count_A = 0;
+    //int pulse_count_B = 0;
+    //int ten_sec_mark = 0;
+    float rpmA = 0.0;
+    float rpmB = 0.0;
     while(1){/*
         if(ten_sec_mark == 10){
             ESP_ERROR_CHECK(pcnt_unit_clear_count(pcnt_unit_motor_A));
@@ -44,7 +46,13 @@ void app_main(void)
         ten_sec_mark++;
         vTaskDelay(pdMS_TO_TICKS(1000));
         */
-       ESP_LOGI(TAG, "RPM: %f", getRPM(&pcnt_unit_motor_A));
+
+       ESP_LOGI(TAG, "RPM1");
+       rpmA = getRPM_motor1(&pcnt_unit_motor_A);
+       ESP_LOGI(TAG, "RPM: %f", rpmA);
+       ESP_LOGI(TAG, "RPM2");
+       rpmB = getRPM_motor2(&pcnt_unit_motor_B);
+       ESP_LOGI(TAG, "RPM: %f", rpmB);
        vTaskDelay(pdMS_TO_TICKS(1000));
     }
 }

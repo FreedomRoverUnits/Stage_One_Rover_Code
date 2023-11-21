@@ -13,8 +13,8 @@ static const char *TAG = "Testing Motor Control";
 #define PCNT_HIGH_LIMIT 1000
 #define PCNT_LOW_LIMIT  -1000
 
-#define MOTOR_A_ENCODER 0
-#define MOTOR_B_ENCODER 2
+#define MOTOR_A_ENCODER 14
+#define MOTOR_B_ENCODER 25
 
 void app_main(void)
 {
