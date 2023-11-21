@@ -1,9 +1,5 @@
 #include "our_lidar.h"
 
-// publisher and lidar message
-// rcl_publisher_t lidar_publisher;
-// sensor_msgs__msg__LaserScan lidar_msg_;
-
 //UART 
 const uart_port_t uart_port_numb = UART_NUM_2;
 
@@ -14,7 +10,6 @@ uint16_t rpms; // derived from the rpm bytes in lfcd packet (lidar)
 //Counter for debugging purposes, when receiving messages from lidar to mcu.
 int num_of_times_it_made_it = 0;
 int num_reset = 0;
-
 
 void uart_setup(){
     uart_config_t uart_config = {
@@ -158,104 +153,6 @@ void poll_lidar(sensor_msgs__msg__LaserScan * lidar_msg_){
 void RCL_setup(){
     
 }
-
-// void timer_callback(rcl_timer_t * timer, int64_t last_call_time, sensor_msgs__msg__LaserScan * lidar_msg_)
-// {
-// 	RCLC_UNUSED(last_call_time);
-// 	if (timer != NULL) {
-// 		printf("Publishing angle increment: %f\n", (float) lidar_msg_->angle_increment);
-// 		printf("Publishing angle min: %f\n", (float) lidar_msg_->angle_min);
-// 		printf("Publishing angle max: %f\n", (float) lidar_msg_->angle_max);
-// 		printf("Publishing range min: %f\n", (float) lidar_msg_->range_min);
-// 		printf("Publishing range max: %f\n", (float) lidar_msg_->range_max);
-
-//         for(int i = 0; i<360 ; i++)
-//         {
-// 		    printf("Publishing range %d: %f\n", i, (float) lidar_msg_->ranges.data[i]);
-// 		    printf("Publishing range %d: %f\n", i, (float) lidar_msg_->intensities.data[i]);
-
-//         }
-
-// 		RCSOFTCHECK(rcl_publish(&lidar_publisher, &lidar_msg_, NULL));
-// 		//lidar_msg_->data++;
-// 	}
-// }
-
-/*
-void micro_ros_task ( void * arg){
-    ESP_LOGI(TAG_LIDAR, "Inside micro ros for lidar");
-
-    //-------------------- setup of node, and publisher
-    rcl_allocator_t allocator = rcl_get_default_allocator();
-	rclc_support_t support;
-
-	rcl_init_options_t init_options = rcl_get_zero_initialized_init_options();
-	RCCHECK(rcl_init_options_init(&init_options, allocator));
-
-#ifdef CONFIG_MICRO_ROS_ESP_XRCE_DDS_MIDDLEWARE
-	rmw_init_options_t* rmw_options = rcl_init_options_get_rmw_init_options(&init_options);
-
-	// Static Agent IP and port can be used instead of autodisvery.
-
-	RCCHECK(rmw_uros_options_set_udp_address(CONFIG_MICRO_ROS_AGENT_IP, CONFIG_MICRO_ROS_AGENT_PORT, rmw_options));
-    ESP_LOGI(TAG_LIDAR, "IP address: %s", CONFIG_MICRO_ROS_AGENT_IP);
-    ESP_LOGI(TAG_LIDAR, "Port number: %s", CONFIG_MICRO_ROS_AGENT_PORT);
-
-    
-	//RCCHECK(rmw_uros_discover_agent(rmw_options));
-#endif
-    ESP_LOGI(TAG_LIDAR, "create init_options");
-
-	// create init_options
-	//RCCHECK(rclc_support_init_with_options(&support, 0, NULL, &init_options, &allocator));
-    bool value_rclc = false;
-    if (RCL_RET_ERROR == rclc_support_init_with_options(&support, 0, NULL, &init_options, &allocator)){
-        value_rclc = true;
-    }
-    ESP_LOGI(TAG_LIDAR, "result for rclc: %d ", value_rclc); //next best thing to do to debug is cross-reference with linorobot and main.c
-	RCCHECK(rclc_support_init_with_options(&support, 0, NULL, &init_options, &allocator));
-    
-    ESP_LOGI(TAG_LIDAR, "create node"); //next best thing to do to debug is cross-reference with linorobot and main.c
-
-	// create node
-	rcl_node_t node;
-	RCCHECK(rclc_node_init_default(&node, "/scan/laser_scan", "", &support));
-
-	// create publisher
-	RCCHECK(rclc_publisher_init_default(
-		&lidar_publisher,
-		&node,
-		ROSIDL_GET_MSG_TYPE_SUPPORT(sensor_msgs, msg, LaserScan),
-		"freertos_int32_publisher"));
-
-    // create timer,
-	rcl_timer_t timer;
-	const unsigned int timer_timeout = 1000;
-	RCCHECK(rclc_timer_init_default(
-		&timer,
-		&support,
-		RCL_MS_TO_NS(timer_timeout),
-		timer_callback));
-
-	// create executor
-	rclc_executor_t executor;
-	RCCHECK(rclc_executor_init(&executor, &support.context, 1, &allocator));
-	RCCHECK(rclc_executor_add_timer(&executor, &timer));
-
-    while(1) {
-
-        poll_lidar();
-
-        rclc_executor_spin_some(&executor, RCL_MS_TO_NS(100));
-        vTaskDelay(100); //this is how often it is getting called
-    }
-
-    // free resources
-	RCCHECK(rcl_publisher_fini(&lidar_publisher, &node));
-	RCCHECK(rcl_node_fini(&node));
-
-  	vTaskDelete(NULL);
-}*/
 
 void lidar_setup(sensor_msgs__msg__LaserScan * lidar_msg_){
     esp_log_level_set(TAG_LIDAR, ESP_LOG_INFO);

@@ -28,19 +28,12 @@
 static const char *TAG_LIDAR = "UART Lidar test";
 
 #define BUF_SIZE_U2 (2520)
-#define RCCHECK(fn) { rcl_ret_t temp_rc = fn; if((temp_rc != RCL_RET_OK)){printf("Failed status on line %d: %d. Aborting.\n",__LINE__,(int)temp_rc);vTaskDelete(NULL);}}
-#define RCSOFTCHECK(fn) { rcl_ret_t temp_rc = fn; if((temp_rc != RCL_RET_OK)){printf("Failed status on line %d: %d. Continuing.\n",__LINE__,(int)temp_rc);}}
-#ifdef CONFIG_MICRO_ROS_ESP_XRCE_DDS_MIDDLEWARE
-#include <rmw_microros/rmw_microros.h>
-#endif
 
 void uart_setup();
 int uart_read(uint8_t* data);
 int uart_write(char* str);
 void poll_lidar(sensor_msgs__msg__LaserScan * lidar_msg_);
 void RCL_Lidar_setup();
-// void timer_callback(rcl_timer_t * timer, int64_t last_call_time, sensor_msgs__msg__LaserScan * lidar_msg_);
-//void micro_ros_task(void * arg);
 void lidar_setup(sensor_msgs__msg__LaserScan * lidar_msg_);
 
 #endif
