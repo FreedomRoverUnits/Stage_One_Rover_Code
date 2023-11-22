@@ -3,8 +3,8 @@
 static int adc_raw[2][10];
 static int voltage[2][10];
 static bool do_calibration1_chan0;
-static bool example_adc_calibration_init(adc_unit_t unit, adc_channel_t channel, adc_atten_t atten, adc_cali_handle_t *out_handle);
-static void example_adc_calibration_deinit(adc_cali_handle_t handle);
+bool example_adc_calibration_init(adc_unit_t unit, adc_channel_t channel, adc_atten_t atten, adc_cali_handle_t *out_handle);
+void example_adc_calibration_deinit(adc_cali_handle_t handle);
 
 adc_oneshot_unit_handle_t adc1_handle;
 adc_cali_handle_t adc1_cali_chan0_handle = NULL;
@@ -50,7 +50,7 @@ void tear_down_adc(void){
 /*---------------------------------------------------------------
         ADC Calibration
 ---------------------------------------------------------------*/
-static bool example_adc_calibration_init(adc_unit_t unit, adc_channel_t channel, adc_atten_t atten, adc_cali_handle_t *out_handle)
+bool example_adc_calibration_init(adc_unit_t unit, adc_channel_t channel, adc_atten_t atten, adc_cali_handle_t *out_handle)
 {
     adc_cali_handle_t handle = NULL;
     esp_err_t ret = ESP_FAIL;
@@ -83,7 +83,7 @@ static bool example_adc_calibration_init(adc_unit_t unit, adc_channel_t channel,
     return calibrated;
 }
 
-static void example_adc_calibration_deinit(adc_cali_handle_t handle)
+void example_adc_calibration_deinit(adc_cali_handle_t handle)
 {
 #if ADC_CALI_SCHEME_LINE_FITTING_SUPPORTED
     ESP_LOGI(TAG_ADC, "deregister %s calibration scheme", "Line Fitting");

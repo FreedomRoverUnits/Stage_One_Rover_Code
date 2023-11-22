@@ -366,8 +366,8 @@ void moveBase()
     //ESP_LOGI(TAG_ERROR, "motor1: %f motor2: %f motor3: %f motor4: %f", req_rpm.motor1, req_rpm.motor2, req_rpm.motor3, req_rpm.motor4);
 
     // get the current speed of each motor
-    float current_rpm1 = getENCODERRPM(&pcnt_unit_motor_1); //TODO: tuesday!!1!!!! //Get rpm might overflow
-    float current_rpm2 = getENCODERRPM(&pcnt_unit_motor_2);
+    float current_rpm1 = getRPM_motor1(&pcnt_unit_motor_1); //TODO: tuesday!!1!!!! //Get rpm might overflow
+    float current_rpm2 = getRPM_motor2(&pcnt_unit_motor_2);
     float current_rpm3 = 0.0; // Not using these guys make sure we can pass 0.0
     float current_rpm4 = 0.0;
 
