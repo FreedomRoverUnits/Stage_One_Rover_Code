@@ -182,8 +182,8 @@ void app_main(void)
     setup_rover_wheels();
 
     //setup pid for both wheels
-    PID_initialize(&motor1_pid,0,100,K_P,K_I,K_D); //left
-    PID_initialize(&motor2_pid,0,100,K_P,K_I,K_D); //right
+    PID_initialize(&motor1_pid,-100,100,K_P,K_I,K_D); //left
+    PID_initialize(&motor2_pid,-100,100,K_P,K_I,K_D); //right
 
     //setup Kinematics 
     Kinematics_Constructor(&kinematics, LINO_BASE, MOTOR_MAX_RPM, MAX_RPM_RATIO, MOTOR_OPERATING_VOLTAGE, MOTOR_POWER_MAX_VOLTAGE, WHEEL_DIAMETER, LR_WHEELS_DISTANCE);
@@ -348,11 +348,11 @@ void moveBase()
     }
 
     //Put battery check Here
-    if(check_battery()){
-        fullStop();
-        led_turn_on();
-        ESP_LOGI(TAG_ERROR, "Battery just ooofffed");
-    }
+    //if(check_battery()){
+    //    fullStop();
+    //    led_turn_on();
+    //    ESP_LOGI(TAG_ERROR, "Battery just ooofffed");
+    //}
 
     //ESP_LOGI(TAG_ERROR, "Twist: linear x: %lf linear y: %lf angular z: %lf", twist_msg.linear.x, twist_msg.linear.y, twist_msg.angular.z);
 
@@ -363,7 +363,7 @@ void moveBase()
         twist_msg.angular.z
     );
 
-    //ESP_LOGI(TAG_ERROR, "motor1: %f motor2: %f motor3: %f motor4: %f", req_rpm.motor1, req_rpm.motor2, req_rpm.motor3, req_rpm.motor4);
+    ESP_LOGI(TAG_ERROR, "motor1: %f motor2: %f motor3: %f motor4: %f", req_rpm.motor1, req_rpm.motor2, req_rpm.motor3, req_rpm.motor4);
 
     // get the current speed of each motor
     float current_rpm1 = getRPM_motor1(&pcnt_unit_motor_1); //TODO: tuesday!!1!!!! //Get rpm might overflow
@@ -371,9 +371,9 @@ void moveBase()
     float current_rpm3 = 0.0; // Not using these guys make sure we can pass 0.0
     float current_rpm4 = 0.0;
 
-    //ESP_LOGI(TAG_ERROR, "current rpm1: %f current rpm2; %f", current_rpm1, current_rpm2);
-    //ESP_LOGI(TAG_ERROR, "Duty Cycle from pid: %lf", compute_pid(&motor1_pid, req_rpm.motor1, current_rpm1));
-    //ESP_LOGI(TAG_ERROR, "Duty Cycle from pid: %lf", compute_pid(&motor2_pid, req_rpm.motor2, current_rpm2));
+    ESP_LOGI(TAG_ERROR, "current rpm1: %f current rpm2; %f", current_rpm1, current_rpm2);
+    ESP_LOGI(TAG_ERROR, "Duty Cycle from pid: %lf", compute_pid(&motor1_pid, req_rpm.motor1, current_rpm1));
+    ESP_LOGI(TAG_ERROR, "Duty Cycle from pid: %lf", compute_pid(&motor2_pid, req_rpm.motor2, current_rpm2));
 
     // the required rpm is capped at -/+ MAX_RPM to prevent the PID from having too much error
     // the PWM value sent to the motor driver is the calculated PID based on required RPM vs measured RPM

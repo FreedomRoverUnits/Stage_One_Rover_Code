@@ -3,6 +3,7 @@
 
 #include "driver/mcpwm.h"
 #include "soc/mcpwm_periph.h"
+#include "math.h"
 
 static const char *TAG = "Testing PWM/Speed Motor Control";
 
