@@ -148,6 +148,7 @@ void poll_lidar(sensor_msgs__msg__LaserScan * lidar_msg_){
             error_tx = uart_write(test_str);
         }
     }
+    free(data);
 }
 
 void RCL_setup(){
