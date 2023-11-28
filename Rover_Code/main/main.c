@@ -34,7 +34,7 @@
 
 #include <nav_msgs/msg/odometry.h>
 #include <sensor_msgs/msg/imu.h> //????
-#include <sensor_msgs/msg/laser_scan.h> //????//
+#include <sensor_msgs/msg/laser_scan.h>
 #include <geometry_msgs/msg/twist.h>
 #include <geometry_msgs/msg/vector3.h>
 #include "esp_timer.h"
@@ -80,15 +80,13 @@
 
 rcl_publisher_t odom_publisher;
 rcl_publisher_t imu_publisher;
-rcl_publisher_t lidar_publisher; //??????
+rcl_publisher_t lidar_publisher;
 rcl_subscription_t twist_subscriber;
-// publisher for lidar is in our_lidar.c file called lidar_publisher
 
 nav_msgs__msg__Odometry odom_msg;
 sensor_msgs__msg__Imu imu_msg;
 sensor_msgs__msg__LaserScan lidar_msg;
 geometry_msgs__msg__Twist twist_msg;
-// lidar message is in our_lidar.c file called lidar_msg
 
 rclc_executor_t executor;
 rclc_support_t support;
@@ -177,138 +175,19 @@ void micro_ros_main_loop(void * arg){
     }
 }
 
-void timer_callback(rcl_timer_t * timer, int64_t last_call_time)
-{
-	RCLC_UNUSED(last_call_time);
-	if (timer != NULL) {
-		printf("Publishing angle increment: %f\n", (float) lidar_msg.angle_increment);
-		printf("Publishing angle min: %f\n", (float) lidar_msg.angle_min);
-		printf("Publishing angle max: %f\n", (float) lidar_msg.angle_max);
-		printf("Publishing range min: %f\n", (float) lidar_msg.range_min);
-		printf("Publishing range max: %f\n", (float) lidar_msg.range_max);
-
-        for(int i = 0; i<360 ; i++)
-        {
-		    printf("Publishing range %d: %f\n", i, (float) lidar_msg.ranges.data[i]);
-		    printf("Publishing intensities %d: %f\n", i, (float) lidar_msg.intensities.data[i]);
-        }
-		RCSOFTCHECK(rcl_publish(&lidar_publisher, &lidar_msg, NULL));
-	}
-}
-
 void publishLidar(){
-    ESP_LOGI(TAG_LIDAR, "inside the publish lidar method"); 
+    // ESP_LOGI(TAG_LIDAR, "inside the publish lidar method"); 
 
-    // while(1) {
+    poll_lidar(&lidar_msg);
 
-        poll_lidar(&lidar_msg);
-        // //fix this code Brittney!!!!
-        // rclc_executor_spin_some(&executor, RCL_MS_TO_NS(100));
-        // vTaskDelay(100); //this is how often it is getting called
-        // ESP_LOGI(TAG_LIDAR, "at the end of the while loop"); 
-        struct timespec time_stamp = getTime();
+    struct timespec time_stamp = getTime();
 
-		lidar_msg.header.stamp.sec = time_stamp.tv_sec;
-    	lidar_msg.header.stamp.nanosec = time_stamp.tv_nsec;
+    lidar_msg.header.stamp.sec = time_stamp.tv_sec;
+    lidar_msg.header.stamp.nanosec = time_stamp.tv_nsec;
 
-    	RCSOFTCHECK(rcl_publish(&lidar_publisher, &lidar_msg, NULL));
-        //rclc_executor_spin_some(&executor, RCL_MS_TO_NS(100));
-        vTaskDelay(250/portTICK_PERIOD_MS); //this is how often it is getting called // 250ms
-    ESP_LOGI(TAG_LIDAR, "at the end of publish lidar"); 
-
-    // }
-
-    // // free resources
-	// RCCHECK(rcl_publisher_fini(&lidar_publisher, &node));
-	// RCCHECK(rcl_node_fini(&node));
-	// RCCHECK(rcl_timer_fini(&timer));
-
-  	// vTaskDelete(NULL);
-}
-
-void micro_ros_task_lidar ( void * arg){
-    ESP_LOGI(TAG_LIDAR, "Inside micro ros for lidar");
-
-    //-------------------- setup of node, and publisher
-    allocator = rcl_get_default_allocator();
-	// rclc_support_t support;
-
-	rcl_init_options_t init_options = rcl_get_zero_initialized_init_options();
-	RCCHECK(rcl_init_options_init(&init_options, allocator));
-
-#ifdef CONFIG_MICRO_ROS_ESP_XRCE_DDS_MIDDLEWARE
-	rmw_init_options_t* rmw_options = rcl_init_options_get_rmw_init_options(&init_options);
-
-	// Static Agent IP and port can be used instead of autodisvery.
-	RCCHECK(rmw_uros_options_set_udp_address(CONFIG_MICRO_ROS_AGENT_IP, CONFIG_MICRO_ROS_AGENT_PORT, rmw_options));
-    ESP_LOGI(TAG_LIDAR, "IP address: %s", CONFIG_MICRO_ROS_AGENT_IP);
-    ESP_LOGI(TAG_LIDAR, "Port number: %s", CONFIG_MICRO_ROS_AGENT_PORT);
-	//RCCHECK(rmw_uros_discover_agent(rmw_options));
-#endif
-
-    ESP_LOGI(TAG_LIDAR, "create init_options");
-
-	// create init_options
-	//RCCHECK(rclc_support_init_with_options(&support, 0, NULL, &init_options, &allocator));
-    // bool value_rclc = false;
-    // if (RCL_RET_ERROR == rclc_support_init_with_options(&support, 0, NULL, &init_options, &allocator)){
-    //     value_rclc = true;
-    // }
-    // ESP_LOGI(TAG_LIDAR, "result for rclc: %d ", value_rclc); //next best thing to do to debug is cross-reference with linorobot and main.c
-	// RCCHECK(rclc_support_init_with_options(&support, 0, NULL, &init_options, &allocator));
-    
-    ESP_LOGI(TAG_LIDAR, "create node"); //next best thing to do to debug is cross-reference with linorobot and main.c
-
-	// create node
-	// rcl_node_t node;
-	// RCCHECK(rclc_node_init_default(&node, "scan", "", &support));
-
-	// create publisher
-	RCCHECK(rclc_publisher_init_default(
-		&lidar_publisher,
-		&node,
-		ROSIDL_GET_MSG_TYPE_SUPPORT(sensor_msgs, msg, LaserScan),
-		"rover_publisher_lidar"));
-
-    // create timer,
-	rcl_timer_t timer;
-	const unsigned int timer_timeout = 1000;
-	RCCHECK(rclc_timer_init_default(
-		&timer,
-		&support,
-		RCL_MS_TO_NS(timer_timeout),
-		timer_callback));
-
-	// create executor
-	// rclc_executor_t executor_lidar;
-	// RCCHECK(rclc_executor_init(&executor_lidar, &support.context, 1, &allocator));
-	// RCCHECK(rclc_executor_add_timer(&executor, &timer));
-    ESP_LOGI(TAG_LIDAR, "right before the while loop lidar"); 
-
-    while(1) {
-
-        poll_lidar(&lidar_msg);
-        // //fix this code Brittney!!!!
-        // rclc_executor_spin_some(&executor, RCL_MS_TO_NS(100));
-        // vTaskDelay(100); //this is how often it is getting called
-        // ESP_LOGI(TAG_LIDAR, "at the end of the while loop"); 
-        struct timespec time_stamp = getTime();
-
-		lidar_msg.header.stamp.sec = time_stamp.tv_sec;
-    	lidar_msg.header.stamp.nanosec = time_stamp.tv_nsec;
-
-    	RCSOFTCHECK(rcl_publish(&lidar_publisher, &lidar_msg, NULL));
-        //rclc_executor_spin_some(&executor, RCL_MS_TO_NS(100));
-        vTaskDelay(250/portTICK_PERIOD_MS); //this is how often it is getting called // 250ms
-
-    }
-
-    // free resources
-	RCCHECK(rcl_publisher_fini(&lidar_publisher, &node));
-	RCCHECK(rcl_node_fini(&node));
-	RCCHECK(rcl_timer_fini(&timer));
-
-  	vTaskDelete(NULL);
+    RCSOFTCHECK(rcl_publish(&lidar_publisher, &lidar_msg, NULL));
+    //vTaskDelay(250/portTICK_PERIOD_MS); //this is how often it is getting called // 250ms
+    // ESP_LOGI(TAG_LIDAR, "at the end of publish lidar"); 
 }
 
 void app_main(void)
@@ -348,12 +227,6 @@ void app_main(void)
 
     ESP_LOGI(TAG_LIDAR, "micros ros main for uros_task");
     xTaskCreate(micro_ros_main_loop, "uros_task", 13000, NULL, 5, NULL);
-
-    //lidar task (update data for 16000(stack) and 5(priority) should I change this?)
-    // ESP_LOGI(TAG_LIDAR, "creating micro ros for lidar");
-    // xTaskCreate(micro_ros_task_lidar, "uros_lidar", 10000, NULL, 5, NULL);
-    //possible solution: 
-    //xTaskCreatePinnedCore(micro_ros_task_lidar, "uros_lidar", 16000, NULL, 5, NULL, 0); // do the same for task above but for 0 do 1
 }
 
 void controlCallback(rcl_timer_t * timer, int64_t last_call_time) 
@@ -400,10 +273,7 @@ bool createEntities()
 	RCCHECK(rclc_support_init_with_options(&support, 0, NULL, &init_options, &allocator));
 
     //Ends here
-    
-    //create init_options (Needs to be edit to match line 54 in int32 pub example)
-    //RCCHECK(rclc_support_init(&support, 0, NULL, &allocator));
-    
+        
     // create node
     RCCHECK(rclc_node_init_default(&node, "linorobot_base_node", "", &support));
 
@@ -430,8 +300,9 @@ bool createEntities()
 		&lidar_publisher,
 		&node,
 		ROSIDL_GET_MSG_TYPE_SUPPORT(sensor_msgs, msg, LaserScan),
-		"scan/laserdata"));
-        
+		"scan"));
+    ESP_LOGI(TAG_LIDAR, "end of creating lidar publisher"); 
+    
 
     // create twist command subscriber
     RCCHECK(rclc_subscription_init_default( 
@@ -440,6 +311,9 @@ bool createEntities()
         ROSIDL_GET_MSG_TYPE_SUPPORT(geometry_msgs, msg, Twist),
         "cmd_vel"
     ));
+
+    ESP_LOGI(TAG_LIDAR, "at the end of create twist subscriber"); 
+
 
     // create timer for actuating the motors at 50 Hz (1000/20)
     //const unsigned int control_timeout = 20;
@@ -452,6 +326,7 @@ bool createEntities()
         RCL_MS_TO_NS(control_timeout),
         controlCallback
     ));
+    ESP_LOGI(TAG_LIDAR, "at the end of create timer"); 
 
     executor = rclc_executor_get_zero_initialized_executor();
 
@@ -464,12 +339,14 @@ bool createEntities()
         &twistCallback, 
         ON_NEW_DATA
     ));
-
+    ESP_LOGI(TAG_LIDAR, "at the end of add executor and subscription"); 
+ 
     RCCHECK(rclc_executor_add_timer(&executor, &control_timer));
 
     // synchronize time with the agent
     syncTime();
     //digitalWrite(LED_PIN, HIGH);
+    ESP_LOGI(TAG_LIDAR, "at the end of create entities"); 
 
     return true;
 }
@@ -481,7 +358,7 @@ bool destroyEntities()
 
     RCSOFTCHECK(rcl_publisher_fini(&odom_publisher, &node));
     RCSOFTCHECK(rcl_publisher_fini(&imu_publisher, &node));
-    RCSOFTCHECK(rcl_publisher_fini(&lidar_publisher, &node));//lidar
+    RCSOFTCHECK(rcl_publisher_fini(&lidar_publisher, &node));
     RCSOFTCHECK(rcl_subscription_fini(&twist_subscriber, &node));
     RCSOFTCHECK(rcl_node_fini(&node));
     RCSOFTCHECK(rcl_timer_fini(&control_timer));
@@ -589,7 +466,7 @@ void publishData()
 
     RCSOFTCHECK(rcl_publish(&imu_publisher, &imu_msg, NULL));
     RCSOFTCHECK(rcl_publish(&odom_publisher, &odom_msg, NULL));
-    ESP_LOGI(TAG_LIDAR, "published imu and odom data"); 
+    ESP_LOGI(TAG_LIDAR, "published imu data"); 
 
     
 }
