@@ -34,6 +34,7 @@
 
 #include <nav_msgs/msg/odometry.h>
 #include <sensor_msgs/msg/imu.h> //????
+#include <sensor_msgs/msg/laser_scan.h>
 #include <geometry_msgs/msg/twist.h>
 #include <geometry_msgs/msg/vector3.h>
 #include "esp_timer.h"
@@ -47,6 +48,8 @@
 #include "Encoder.h"
 #include "blink.h"
 #include "Battery_Sense.h"
+#include "our_lidar.h"
+
 
 #define RCCHECK(fn) { rcl_ret_t temp_rc = fn; if((temp_rc != RCL_RET_OK)){rclErrorLoop();}}
 #define RCSOFTCHECK(fn) { rcl_ret_t temp_rc = fn; if((temp_rc != RCL_RET_OK)){}}
@@ -77,10 +80,12 @@
 
 rcl_publisher_t odom_publisher;
 rcl_publisher_t imu_publisher;
+rcl_publisher_t lidar_publisher;
 rcl_subscription_t twist_subscriber;
 
 nav_msgs__msg__Odometry odom_msg;
 sensor_msgs__msg__Imu imu_msg;
+sensor_msgs__msg__LaserScan lidar_msg;
 geometry_msgs__msg__Twist twist_msg;
 
 rclc_executor_t executor;
@@ -123,6 +128,10 @@ int64_t millis_time(void);
 struct timespec getTime(void);
 void rclErrorLoop(void);
 void syncTime(void);
+void micro_ros_task_lidar(void * arg);
+void publishLidar();
+void timer_callback(rcl_timer_t * timer, int64_t last_call_time);
+void controlCallback(rcl_timer_t * timer, int64_t last_call_time);
 
 static const char *TAG_ERROR = "Debugging Test";
 
@@ -166,6 +175,20 @@ void micro_ros_main_loop(void * arg){
     }
 }
 
+void publishLidar(){
+    // ESP_LOGI(TAG_LIDAR, "inside the publish lidar method"); 
+
+    poll_lidar(&lidar_msg);
+
+    struct timespec time_stamp = getTime();
+
+    lidar_msg.header.stamp.sec = time_stamp.tv_sec;
+    lidar_msg.header.stamp.nanosec = time_stamp.tv_nsec;
+
+    RCSOFTCHECK(rcl_publish(&lidar_publisher, &lidar_msg, NULL));
+    //vTaskDelay(250/portTICK_PERIOD_MS); //this is how often it is getting called // 250ms
+    // ESP_LOGI(TAG_LIDAR, "at the end of publish lidar"); 
+}
 
 void app_main(void)
 {
@@ -191,6 +214,9 @@ void app_main(void)
     //setup IMU
     setup_imu();
 
+    //Lidar setup
+    lidar_setup(&lidar_msg);
+
     #if defined(CONFIG_MICRO_ROS_ESP_NETIF_WLAN) || defined(CONFIG_MICRO_ROS_ESP_NETIF_ENET)
     //ESP_LOGI(TAG_ERROR, "transport");
     ESP_ERROR_CHECK(uros_network_interface_initialize());
@@ -199,7 +225,8 @@ void app_main(void)
 
     state = WAITING_AGENT;
 
-    xTaskCreate(micro_ros_main_loop, "uros_task", 3000, NULL, 5, NULL);
+    ESP_LOGI(TAG_LIDAR, "micros ros main for uros_task");
+    xTaskCreate(micro_ros_main_loop, "uros_task", 13000, NULL, 5, NULL);
 }
 
 void controlCallback(rcl_timer_t * timer, int64_t last_call_time) 
@@ -207,9 +234,14 @@ void controlCallback(rcl_timer_t * timer, int64_t last_call_time)
     RCLC_UNUSED(last_call_time);
     if (timer != NULL) 
     {
+    ESP_LOGI(TAG_LIDAR, "inside the controlCallBack method"); 
+
        moveBase(); //one thing todo in this
        publishData();
+       publishLidar();
     }
+    ESP_LOGI(TAG_LIDAR, "at the end of the controlCallBack method"); 
+
 }
 
 void twistCallback(const void * msgin) 
@@ -241,10 +273,7 @@ bool createEntities()
 	RCCHECK(rclc_support_init_with_options(&support, 0, NULL, &init_options, &allocator));
 
     //Ends here
-    
-    //create init_options (Needs to be edit to match line 54 in int32 pub example)
-    //RCCHECK(rclc_support_init(&support, 0, NULL, &allocator));
-    
+        
     // create node
     RCCHECK(rclc_node_init_default(&node, "linorobot_base_node", "", &support));
 
@@ -264,6 +293,17 @@ bool createEntities()
         "imu/data"
     ));
 
+    // create Lidar publisher
+    ESP_LOGI(TAG_LIDAR, "created lidar publisher"); 
+
+    RCCHECK(rclc_publisher_init_default(
+		&lidar_publisher,
+		&node,
+		ROSIDL_GET_MSG_TYPE_SUPPORT(sensor_msgs, msg, LaserScan),
+		"scan"));
+    ESP_LOGI(TAG_LIDAR, "end of creating lidar publisher"); 
+    
+
     // create twist command subscriber
     RCCHECK(rclc_subscription_init_default( 
         &twist_subscriber, 
@@ -271,6 +311,9 @@ bool createEntities()
         ROSIDL_GET_MSG_TYPE_SUPPORT(geometry_msgs, msg, Twist),
         "cmd_vel"
     ));
+
+    ESP_LOGI(TAG_LIDAR, "at the end of create twist subscriber"); 
+
 
     // create timer for actuating the motors at 50 Hz (1000/20)
     //const unsigned int control_timeout = 20;
@@ -283,6 +326,7 @@ bool createEntities()
         RCL_MS_TO_NS(control_timeout),
         controlCallback
     ));
+    ESP_LOGI(TAG_LIDAR, "at the end of create timer"); 
 
     executor = rclc_executor_get_zero_initialized_executor();
 
@@ -295,12 +339,14 @@ bool createEntities()
         &twistCallback, 
         ON_NEW_DATA
     ));
-
+    ESP_LOGI(TAG_LIDAR, "at the end of add executor and subscription"); 
+ 
     RCCHECK(rclc_executor_add_timer(&executor, &control_timer));
 
     // synchronize time with the agent
     syncTime();
     //digitalWrite(LED_PIN, HIGH);
+    ESP_LOGI(TAG_LIDAR, "at the end of create entities"); 
 
     return true;
 }
@@ -312,6 +358,7 @@ bool destroyEntities()
 
     RCSOFTCHECK(rcl_publisher_fini(&odom_publisher, &node));
     RCSOFTCHECK(rcl_publisher_fini(&imu_publisher, &node));
+    RCSOFTCHECK(rcl_publisher_fini(&lidar_publisher, &node));
     RCSOFTCHECK(rcl_subscription_fini(&twist_subscriber, &node));
     RCSOFTCHECK(rcl_node_fini(&node));
     RCSOFTCHECK(rcl_timer_fini(&control_timer));
@@ -419,6 +466,9 @@ void publishData()
 
     RCSOFTCHECK(rcl_publish(&imu_publisher, &imu_msg, NULL));
     RCSOFTCHECK(rcl_publish(&odom_publisher, &odom_msg, NULL));
+    ESP_LOGI(TAG_LIDAR, "published imu data"); 
+
+    
 }
 
 void syncTime()
