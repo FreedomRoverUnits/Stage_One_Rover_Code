@@ -59,9 +59,12 @@
 
 //////////////////////// Defines From Lino Config ////////////////////////////////////////
 #define LINO_BASE DIFFERENTIAL_DRIVE       // 2WD and Tracked robot w/ 2 motors
-#define K_P 0.6                             // P constant
-#define K_I 0.8                             // I constant
-#define K_D 0.5                             // D constant
+#define K_P1 0.63                             // P constant
+#define K_I1 0.30                             // I constant
+#define K_D1 0.173                             // D constant
+#define K_P2 0.6                             // P constant
+#define K_I2 0.9                             // I constant
+#define K_D2 0.8                             // D constant
 #define MOTOR_MAX_RPM 140                   // motor's max RPM          
 #define MAX_RPM_RATIO 0.85                  // max RPM allowed for each MAX_RPM_ALLOWED = MOTOR_MAX_RPM * MAX_RPM_RATIO          
 #define MOTOR_OPERATING_VOLTAGE 24          // motor's operating voltage (used to calculate max RPM)
@@ -182,8 +185,8 @@ void app_main(void)
     setup_rover_wheels();
 
     //setup pid for both wheels
-    PID_initialize(&motor1_pid,-100,100,K_P,K_I,K_D); //left
-    PID_initialize(&motor2_pid,-100,100,K_P,K_I,K_D); //right
+    PID_initialize(&motor1_pid,0,100,K_P1,K_I1,K_D1); //left
+    PID_initialize(&motor2_pid,0,100,K_P2,K_I2,K_D2); //right
 
     //setup Kinematics 
     Kinematics_Constructor(&kinematics, LINO_BASE, MOTOR_MAX_RPM, MAX_RPM_RATIO, MOTOR_OPERATING_VOLTAGE, MOTOR_POWER_MAX_VOLTAGE, WHEEL_DIAMETER, LR_WHEELS_DISTANCE);
@@ -273,9 +276,9 @@ bool createEntities()
     ));
 
     // create timer for actuating the motors at 50 Hz (1000/20)
-    //const unsigned int control_timeout = 20;
+    const unsigned int control_timeout = 20;
     
-    const unsigned int control_timeout = 1000;
+    //const unsigned int control_timeout = 1000;
     
     RCCHECK(rclc_timer_init_default( 
         &control_timer, 
