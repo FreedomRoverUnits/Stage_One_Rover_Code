@@ -21,7 +21,7 @@ const static char *TAG_ADC = "ADC";
 void setup_adc(void);
 bool check_battery(void);
 void tear_down_adc(void);
-static void example_adc_calibration_deinit(adc_cali_handle_t handle);
-static bool example_adc_calibration_init(adc_unit_t unit, adc_channel_t channel, adc_atten_t atten, adc_cali_handle_t *out_handle);
+void example_adc_calibration_deinit(adc_cali_handle_t handle);
+bool example_adc_calibration_init(adc_unit_t unit, adc_channel_t channel, adc_atten_t atten, adc_cali_handle_t *out_handle);
 
 #endif
