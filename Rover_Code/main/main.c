@@ -254,7 +254,7 @@ void update_lidar(){
             //race condition with lidar_msg
             xSemaphoreGive(xSemaphore);
         }
-        vTaskDelay(((TickType_t) 500) / portTICK_PERIOD_MS);
+        vTaskDelay(((TickType_t) 5000) / portTICK_PERIOD_MS);
     }
 
   	vTaskDelete(NULL);
@@ -271,7 +271,7 @@ void controlCallback(rcl_timer_t * timer, int64_t last_call_time)
         publishData();
         if(xSemaphoreTake(xSemaphore, (TickType_t) 0) == pdTRUE)
         {   
-            ESP_LOGI(TAG_LIDAR, "inside the semaphor for lidar"); 
+            //ESP_LOGI(TAG_LIDAR, "inside the semaphor for lidar"); 
             if(isLidarDataReady){
                 publishLidar();
                 isLidarDataReady = false;
