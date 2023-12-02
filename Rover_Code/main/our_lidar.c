@@ -143,7 +143,7 @@ void poll_lidar(sensor_msgs__msg__LaserScan * lidar_msg_){
             did_not_work =0;
             num_reset++;
             error_tx_end = uart_write(test_str_end);
-            ESP_LOGI(TAG_LIDAR, "Number of resets of lidar: %d\n Current value of conversions: %d", num_reset, num_of_times_it_made_it);
+            //ESP_LOGI(TAG_LIDAR, "Number of resets of lidar: %d\n Current value of conversions: %d", num_reset, num_of_times_it_made_it);
             vTaskDelay(5);                      
             error_tx = uart_write(test_str);
         }

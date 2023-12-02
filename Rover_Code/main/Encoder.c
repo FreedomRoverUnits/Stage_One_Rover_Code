@@ -107,7 +107,7 @@ float getRPM_motor1(pcnt_unit_handle_t * motor_enc){
     unsigned long current_time = esp_timer_get_time();
     unsigned long dt = current_time - prev_update_time_test_motor1;
 
-    double dtm = (double)dt / 6000000;
+    double dtm = (double)dt / 60000000;
     double delta_ticks = encoder_ticks - pre_encoder_ticks_test_motor1;
 
     prev_update_time_test_motor1 = current_time;
@@ -124,7 +124,7 @@ float getRPM_motor2(pcnt_unit_handle_t * motor_enc){
     unsigned long current_time = esp_timer_get_time();
     unsigned long dt = current_time - prev_update_time_test_motor2;
 
-    double dtm = (double)dt / 6000000;
+    double dtm = (double)dt / 60000000; //micro sec to  minutes
     double delta_ticks = encoder_ticks - pre_encoder_ticks_test_motor2;
 
     prev_update_time_test_motor2 = current_time;

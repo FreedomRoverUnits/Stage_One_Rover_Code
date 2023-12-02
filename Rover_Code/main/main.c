@@ -62,23 +62,19 @@
 
 //////////////////////// Defines From Lino Config ////////////////////////////////////////
 #define LINO_BASE DIFFERENTIAL_DRIVE       // 2WD and Tracked robot w/ 2 motors
-#define K_P1 0.63                             // P constant
-#define K_I1 0.30                             // I constant
-#define K_D1 0.173                             // D constant
-#define K_P2 0.6                             // P constant
-#define K_I2 0.9                             // I constant
-#define K_D2 0.8                             // D constant
-#define MOTOR_MAX_RPM 140                   // motor's max RPM          
-#define MAX_RPM_RATIO 0.85                  // max RPM allowed for each MAX_RPM_ALLOWED = MOTOR_MAX_RPM * MAX_RPM_RATIO          
-#define MOTOR_OPERATING_VOLTAGE 24          // motor's operating voltage (used to calculate max RPM)
-#define MOTOR_POWER_MAX_VOLTAGE 12          // max voltage of the motor's power source (used to calculate max RPM)
-#define MOTOR_POWER_MEASURED_VOLTAGE 12     // current voltage reading of the power connected to the motor (used for calibration)
-#define COUNTS_PER_REV1 144000              // wheel1 encoder's no of ticks per rev
-#define COUNTS_PER_REV2 144000              // wheel2 encoder's no of ticks per rev
-#define COUNTS_PER_REV3 144000              // wheel3 encoder's no of ticks per rev
-#define COUNTS_PER_REV4 144000              // wheel4 encoder's no of ticks per rev
-#define WHEEL_DIAMETER 0.152                // wheel's diameter in meters
-#define LR_WHEELS_DISTANCE 0.271            // distance between left and right wheels
+#define K_P1 0.065                             // P constant
+#define K_I1 0.04                             // I constant
+#define K_D1 0.025                             // D constant
+#define K_P2 0.065                             // P constant
+#define K_I2 0.04                            // I constant
+#define K_D2 0.025                             // D constant
+#define MOTOR_MAX_RPM 250                   // motor's max RPM          
+#define MAX_RPM_RATIO 0.95                  // max RPM allowed for each MAX_RPM_ALLOWED = MOTOR_MAX_RPM * MAX_RPM_RATIO          
+#define MOTOR_OPERATING_VOLTAGE 8          // motor's operating voltage (used to calculate max RPM)
+#define MOTOR_POWER_MAX_VOLTAGE 8.4          // max voltage of the motor's power source (used to calculate max RPM)
+#define MOTOR_POWER_MEASURED_VOLTAGE 7.7     // current voltage reading of the power connected to the motor (used for calibration)
+#define WHEEL_DIAMETER 0.06                // wheel's diameter in meters
+#define LR_WHEELS_DISTANCE 0.104            // distance between left and right wheels
 
 
 rcl_publisher_t odom_publisher;
@@ -164,6 +160,7 @@ void micro_ros_main_loop(void * arg){
                 {
                     //ESP_LOGI(TAG_ERROR, "connecting to agent, spin");
                     rclc_executor_spin_some(&executor, RCL_MS_TO_NS(100));
+                    vTaskDelay(5);
                 }
                 break;
             case AGENT_DISCONNECTED:
@@ -237,13 +234,13 @@ void controlCallback(rcl_timer_t * timer, int64_t last_call_time)
     RCLC_UNUSED(last_call_time);
     if (timer != NULL) 
     {
-    ESP_LOGI(TAG_LIDAR, "inside the controlCallBack method"); 
+    //ESP_LOGI(TAG_LIDAR, "inside the controlCallBack method"); 
 
        moveBase(); //one thing todo in this
        publishData();
-       publishLidar();
+       //publishLidar();
     }
-    ESP_LOGI(TAG_LIDAR, "at the end of the controlCallBack method"); 
+    //ESP_LOGI(TAG_LIDAR, "at the end of the controlCallBack method"); 
 
 }
 
@@ -398,11 +395,11 @@ void moveBase()
     }
 
     //Put battery check Here
-    //if(check_battery()){
-    //    fullStop();
-    //    led_turn_on();
-    //    ESP_LOGI(TAG_ERROR, "Battery just ooofffed");
-    //}
+    if(check_battery()){
+        fullStop();
+        led_turn_on();
+        ESP_LOGI(TAG_ERROR, "Battery just ooofffed");
+    }
 
     //ESP_LOGI(TAG_ERROR, "Twist: linear x: %lf linear y: %lf angular z: %lf", twist_msg.linear.x, twist_msg.linear.y, twist_msg.angular.z);
 
@@ -413,7 +410,9 @@ void moveBase()
         twist_msg.angular.z
     );
 
-    ESP_LOGI(TAG_ERROR, "motor1: %f motor2: %f motor3: %f motor4: %f", req_rpm.motor1, req_rpm.motor2, req_rpm.motor3, req_rpm.motor4);
+    if(req_rpm.motor1 != 0.0 || req_rpm.motor2 != 0.0){
+        ESP_LOGI(TAG_ERROR, "motor1: %f motor2: %f motor3: %f motor4: %f", req_rpm.motor1, req_rpm.motor2, req_rpm.motor3, req_rpm.motor4);
+    }
 
     // get the current speed of each motor
     float current_rpm1 = getRPM_motor1(&pcnt_unit_motor_1); //TODO: tuesday!!1!!!! //Get rpm might overflow
@@ -421,14 +420,21 @@ void moveBase()
     float current_rpm3 = 0.0; // Not using these guys make sure we can pass 0.0
     float current_rpm4 = 0.0;
 
-    ESP_LOGI(TAG_ERROR, "current rpm1: %f current rpm2; %f", current_rpm1, current_rpm2);
-    ESP_LOGI(TAG_ERROR, "Duty Cycle from pid: %lf", compute_pid(&motor1_pid, req_rpm.motor1, current_rpm1));
-    ESP_LOGI(TAG_ERROR, "Duty Cycle from pid: %lf", compute_pid(&motor2_pid, req_rpm.motor2, current_rpm2));
+    // If req_rpm is negative change current rpm of that motor to negative
+
+    double pid1 = compute_pid(&motor1_pid, req_rpm.motor1, current_rpm1);
+    double pid2 = compute_pid(&motor2_pid, req_rpm.motor2, current_rpm2);
+
+    if(req_rpm.motor1 != 0.0 || req_rpm.motor2 != 0.0){
+        ESP_LOGI(TAG_ERROR, "current rpm1: %f current rpm2; %f", current_rpm1, current_rpm2);
+        ESP_LOGI(TAG_ERROR, "Duty Cycle 1: %f Duty Cycle 2: %f", pid1, pid2);
+        ESP_LOGI(TAG_ERROR, "\n");
+    }
 
     // the required rpm is capped at -/+ MAX_RPM to prevent the PID from having too much error
     // the PWM value sent to the motor driver is the calculated PID based on required RPM vs measured RPM
-    spin_dir_left(MCPWM_UNIT_0,MCPWM_TIMER_0,compute_pid(&motor1_pid, req_rpm.motor1, current_rpm1));
-    spin_dir_right(MCPWM_UNIT_0,MCPWM_TIMER_1,compute_pid(&motor2_pid, req_rpm.motor2, current_rpm2));
+    spin_dir_left(MCPWM_UNIT_0,MCPWM_TIMER_0,pid1);
+    spin_dir_right(MCPWM_UNIT_0,MCPWM_TIMER_1,pid2);
 
 
     R_velocities current_vel = getVelocities(&kinematics,
@@ -469,7 +475,7 @@ void publishData()
 
     RCSOFTCHECK(rcl_publish(&imu_publisher, &imu_msg, NULL));
     RCSOFTCHECK(rcl_publish(&odom_publisher, &odom_msg, NULL));
-    ESP_LOGI(TAG_LIDAR, "published imu data"); 
+    //ESP_LOGI(TAG_LIDAR, "published imu data"); 
 
     
 }
