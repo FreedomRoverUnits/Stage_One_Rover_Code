@@ -325,7 +325,7 @@ bool createEntities()
         &odom_publisher, 
         &node,
         ROSIDL_GET_MSG_TYPE_SUPPORT(nav_msgs, msg, Odometry),
-        "odom/unfilteredbrit"
+        "odom/unfiltered"
     ));
 
     // create IMU publisher
@@ -333,7 +333,7 @@ bool createEntities()
         &imu_publisher, 
         &node,
         ROSIDL_GET_MSG_TYPE_SUPPORT(sensor_msgs, msg, Imu), //TODO : double check how this works
-        "imu/databrit"
+        "imu/data"
     ));
 
     // create Lidar publisher
@@ -343,7 +343,7 @@ bool createEntities()
 		&lidar_publisher,
 		&node,
 		ROSIDL_GET_MSG_TYPE_SUPPORT(sensor_msgs, msg, LaserScan),
-		"scanbrit"));
+		"scan"));
     ESP_LOGI(TAG_LIDAR, "end of creating lidar publisher"); 
     
 
@@ -352,7 +352,7 @@ bool createEntities()
         &twist_subscriber, 
         &node,
         ROSIDL_GET_MSG_TYPE_SUPPORT(geometry_msgs, msg, Twist),
-        "cmd_velbrit"
+        "cmd_vel"
     ));
 
     ESP_LOGI(TAG_LIDAR, "at the end of create twist subscriber"); 
