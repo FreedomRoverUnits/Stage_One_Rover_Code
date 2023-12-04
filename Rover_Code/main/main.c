@@ -62,12 +62,12 @@
 
 //////////////////////// Defines From Lino Config ////////////////////////////////////////
 #define LINO_BASE DIFFERENTIAL_DRIVE       // 2WD and Tracked robot w/ 2 motors
-#define K_P1 0.065                             // P constant
-#define K_I1 0.04                             // I constant
-#define K_D1 0.025                             // D constant
-#define K_P2 0.065                             // P constant
-#define K_I2 0.04                            // I constant
-#define K_D2 0.025                             // D constant
+#define K_P1 0.04                             // P constant
+#define K_I1 0.03                             // I constant
+#define K_D1 0.017                             // D constant
+#define K_P2 0.04                             // P constant
+#define K_I2 0.03                            // I constant
+#define K_D2 0.017                             // D constant
 #define MOTOR_MAX_RPM 250                   // motor's max RPM          
 #define MAX_RPM_RATIO 0.95                  // max RPM allowed for each MAX_RPM_ALLOWED = MOTOR_MAX_RPM * MAX_RPM_RATIO          
 #define MOTOR_OPERATING_VOLTAGE 8          // motor's operating voltage (used to calculate max RPM)
