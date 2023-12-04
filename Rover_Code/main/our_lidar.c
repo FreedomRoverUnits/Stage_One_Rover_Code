@@ -57,8 +57,8 @@ int uart_write(char* str){
     return uart_write_bytes(uart_port_numb, (const char*)str, sizeof(str));
 }
 
-void poll_lidar(sensor_msgs__msg__LaserScan * lidar_msg_){
-    int ready = 0;
+bool poll_lidar(sensor_msgs__msg__LaserScan * lidar_msg_){
+    bool ready = false;
     unsigned char frame[BUF_SIZE_U2]; 
     uint8_t *data = (uint8_t *) malloc(BUF_SIZE_U2);
     int index;
@@ -89,11 +89,11 @@ void poll_lidar(sensor_msgs__msg__LaserScan * lidar_msg_){
             for (int v = 2; v <= 2520; v++) {
                 frame[v] = data[v]; //copying the data from data array to frame
             }
-            ready = 1;
+            ready = true;
         }  
         
         //Once frame captured, extract range/angle and convert to x/y:
-        if (ready == 1) {
+        if (ready) {
             lidar_msg_->angle_increment = (2.0*M_PI/360.0);
             lidar_msg_->angle_min = 0.0;
             lidar_msg_->angle_max = 2.0 * M_PI - lidar_msg_->angle_increment;
@@ -127,7 +127,7 @@ void poll_lidar(sensor_msgs__msg__LaserScan * lidar_msg_){
             lidar_msg_->time_increment = (float)(1.0 / (rpms*6));
             lidar_msg_->scan_time = lidar_msg_->time_increment * 360;
 
-            ready = 0;
+            ready = false;
             num_of_times_it_made_it++;
             successful_scan = true;
             //vTaskDelay(1);
@@ -148,7 +148,10 @@ void poll_lidar(sensor_msgs__msg__LaserScan * lidar_msg_){
             error_tx = uart_write(test_str);
         }
     }
+
     free(data);
+    return successful_scan;
+
 }
 
 void RCL_setup(){

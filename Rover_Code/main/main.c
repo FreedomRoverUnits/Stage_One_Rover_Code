@@ -76,7 +76,6 @@
 #define WHEEL_DIAMETER 0.06                // wheel's diameter in meters
 #define LR_WHEELS_DISTANCE 0.104            // distance between left and right wheels
 
-
 rcl_publisher_t odom_publisher;
 rcl_publisher_t imu_publisher;
 rcl_publisher_t lidar_publisher;
@@ -131,6 +130,10 @@ void micro_ros_task_lidar(void * arg);
 void publishLidar();
 void timer_callback(rcl_timer_t * timer, int64_t last_call_time);
 void controlCallback(rcl_timer_t * timer, int64_t last_call_time);
+void update_lidar();
+
+bool isLidarDataReady = false;
+SemaphoreHandle_t xSemaphore;
 
 static const char *TAG_ERROR = "Debugging Test";
 
@@ -173,12 +176,14 @@ void micro_ros_main_loop(void * arg){
                 break;
         }
     }
+  	vTaskDelete(NULL);
+
 }
 
 void publishLidar(){
     // ESP_LOGI(TAG_LIDAR, "inside the publish lidar method"); 
 
-    poll_lidar(&lidar_msg);
+    // poll_lidar(&lidar_msg);
 
     struct timespec time_stamp = getTime();
 
@@ -217,6 +222,10 @@ void app_main(void)
     //Lidar setup
     lidar_setup(&lidar_msg);
 
+    //Setup Semaphore
+    xSemaphore = xSemaphoreCreateBinary();
+    xSemaphoreGive(xSemaphore);
+
     #if defined(CONFIG_MICRO_ROS_ESP_NETIF_WLAN) || defined(CONFIG_MICRO_ROS_ESP_NETIF_ENET)
     //ESP_LOGI(TAG_ERROR, "transport");
     ESP_ERROR_CHECK(uros_network_interface_initialize());
@@ -226,21 +235,52 @@ void app_main(void)
     state = WAITING_AGENT;
 
     ESP_LOGI(TAG_LIDAR, "micros ros main for uros_task");
-    xTaskCreate(micro_ros_main_loop, "uros_task", 13000, NULL, 5, NULL);
+    xTaskCreate(micro_ros_main_loop, "uros_task", 3000, NULL, 5, NULL);
+    vTaskDelay(10);
+    xTaskCreate(update_lidar, "lidar_data", 9000, NULL, 5, NULL);
+
 }
 
+void update_lidar(){
+
+    while(1){
+        if(xSemaphoreTake(xSemaphore, portMAX_DELAY) == pdTRUE)
+        {
+            isLidarDataReady = poll_lidar(&lidar_msg);
+            ESP_LOGI(TAG_LIDAR, "Poll Lidar and took sempahor");
+            //race condition with lidar_msg
+            xSemaphoreGive(xSemaphore);
+        }
+        vTaskDelay(((TickType_t) 5000) / portTICK_PERIOD_MS);
+    }
+
+  	vTaskDelete(NULL);
+
+}
 void controlCallback(rcl_timer_t * timer, int64_t last_call_time) 
 {
     RCLC_UNUSED(last_call_time);
     if (timer != NULL) 
     {
-    //ESP_LOGI(TAG_LIDAR, "inside the controlCallBack method"); 
+        // ESP_LOGI(TAG_LIDAR, "inside the controlCallBack method"); 
 
-       moveBase(); //one thing todo in this
-       publishData();
-       //publishLidar();
+        moveBase(); //one thing todo in this
+        publishData();
+        if(xSemaphoreTake(xSemaphore, (TickType_t) 0) == pdTRUE)
+        {   
+            //ESP_LOGI(TAG_LIDAR, "inside the semaphor for lidar"); 
+            if(isLidarDataReady){
+                publishLidar();
+                isLidarDataReady = false;
+                ESP_LOGI(TAG_LIDAR, "published lidar method"); 
+                
+            }
+            xSemaphoreGive(xSemaphore);
+            // ESP_LOGI(TAG_LIDAR, "inside the controlCallBack publishing lidar method"); 
+
+        }
     }
-    //ESP_LOGI(TAG_LIDAR, "at the end of the controlCallBack method"); 
+        //ESP_LOGI(TAG_LIDAR, "at the end of the controlCallBack method"); 
 
 }
 
@@ -275,7 +315,7 @@ bool createEntities()
     //Ends here
         
     // create node
-    RCCHECK(rclc_node_init_default(&node, "linorobot_base_node", "", &support));
+    RCCHECK(rclc_node_init_default(&node, "linorobot_base_node_brit", "", &support));
 
     // create odometry publisher
     RCCHECK(rclc_publisher_init_default( 
@@ -410,9 +450,7 @@ void moveBase()
         twist_msg.angular.z
     );
 
-    if(req_rpm.motor1 != 0.0 || req_rpm.motor2 != 0.0){
-        ESP_LOGI(TAG_ERROR, "motor1: %f motor2: %f motor3: %f motor4: %f", req_rpm.motor1, req_rpm.motor2, req_rpm.motor3, req_rpm.motor4);
-    }
+    //ESP_LOGI(TAG_ERROR, "motor1: %f motor2: %f motor3: %f motor4: %f", req_rpm.motor1, req_rpm.motor2, req_rpm.motor3, req_rpm.motor4);
 
     // get the current speed of each motor
     float current_rpm1 = getRPM_motor1(&pcnt_unit_motor_1); //TODO: tuesday!!1!!!! //Get rpm might overflow

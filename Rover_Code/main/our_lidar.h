@@ -32,7 +32,7 @@ static const char *TAG_LIDAR = "UART Lidar test";
 void uart_setup();
 int uart_read(uint8_t* data);
 int uart_write(char* str);
-void poll_lidar(sensor_msgs__msg__LaserScan * lidar_msg_);
+bool poll_lidar(sensor_msgs__msg__LaserScan * lidar_msg_);
 void RCL_Lidar_setup();
 void lidar_setup(sensor_msgs__msg__LaserScan * lidar_msg_);
 
