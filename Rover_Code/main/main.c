@@ -62,12 +62,12 @@
 
 //////////////////////// Defines From Lino Config ////////////////////////////////////////
 #define LINO_BASE DIFFERENTIAL_DRIVE       // 2WD and Tracked robot w/ 2 motors
-#define K_P1 0.04                             // P constant
-#define K_I1 0.03                             // I constant
-#define K_D1 0.017                             // D constant
-#define K_P2 0.04                             // P constant
-#define K_I2 0.03                            // I constant
-#define K_D2 0.017                             // D constant
+#define K_P1 0.05                             // P constant
+#define K_I1 0.034                             // I constant34
+#define K_D1 0.0175                             // D constant24
+#define K_P2 0.0411                             // P constant
+#define K_I2 0.03135                            // I constant3135
+#define K_D2 0.0173                             // D constant
 #define MOTOR_MAX_RPM 250                   // motor's max RPM          
 #define MAX_RPM_RATIO 0.95                  // max RPM allowed for each MAX_RPM_ALLOWED = MOTOR_MAX_RPM * MAX_RPM_RATIO          
 #define MOTOR_OPERATING_VOLTAGE 8          // motor's operating voltage (used to calculate max RPM)
@@ -97,6 +97,8 @@ unsigned long prev_cmd_time = 0;
 unsigned long prev_odom_update = 0;
 
 bool battery_cutoff = false;
+//int motor1Dir = 0;
+//int motor2Dir = 0;
 
 enum states 
 {
@@ -329,7 +331,7 @@ bool createEntities()
     RCCHECK(rclc_publisher_init_default( 
         &imu_publisher, 
         &node,
-        ROSIDL_GET_MSG_TYPE_SUPPORT(sensor_msgs, msg, Imu), //TODO : double check how this works
+        ROSIDL_GET_MSG_TYPE_SUPPORT(sensor_msgs, msg, Imu),
         "imu/data"
     ));
 
@@ -349,7 +351,7 @@ bool createEntities()
         &twist_subscriber, 
         &node,
         ROSIDL_GET_MSG_TYPE_SUPPORT(geometry_msgs, msg, Twist),
-        "cmd_vel"
+        "agent0/cmd_vel"
     ));
 
     ESP_LOGI(TAG_LIDAR, "at the end of create twist subscriber"); 
@@ -458,12 +460,11 @@ void moveBase()
     float current_rpm3 = 0.0; // Not using these guys make sure we can pass 0.0
     float current_rpm4 = 0.0;
 
-    // If req_rpm is negative change current rpm of that motor to negative
-
     double pid1 = compute_pid(&motor1_pid, req_rpm.motor1, current_rpm1);
     double pid2 = compute_pid(&motor2_pid, req_rpm.motor2, current_rpm2);
 
     if(req_rpm.motor1 != 0.0 || req_rpm.motor2 != 0.0){
+        //ESP_LOGI(TAG_ERROR, "Target rpm1: %f Target rpm2: %f", req_rpm.motor1, req_rpm.motor2);
         ESP_LOGI(TAG_ERROR, "current rpm1: %f current rpm2; %f", current_rpm1, current_rpm2);
         ESP_LOGI(TAG_ERROR, "Duty Cycle 1: %f Duty Cycle 2: %f", pid1, pid2);
         ESP_LOGI(TAG_ERROR, "\n");
@@ -487,7 +488,7 @@ void moveBase()
     unsigned long now = millis_time();
     float vel_dt = (now - prev_odom_update) / 1000.0;
     prev_odom_update = now;
-    
+
     update(&odometry,
         vel_dt, 
         current_vel.linear_x, 
