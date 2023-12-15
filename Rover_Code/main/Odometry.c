@@ -38,9 +38,9 @@ void update(Odometry * our_odo, float vel_dt, float linear_vel_x, float linear_v
     our_odo->odom_msg_.pose.pose.orientation.z = (double) q[3];
     our_odo->odom_msg_.pose.pose.orientation.w = (double) q[0];
 
-    our_odo->odom_msg_.pose.covariance[0] = 0.001;
-    our_odo->odom_msg_.pose.covariance[7] = 0.001;
-    our_odo->odom_msg_.pose.covariance[35] = 0.001;
+    our_odo->odom_msg_.pose.covariance[0] = 0.05;
+    our_odo->odom_msg_.pose.covariance[7] = 0.05;
+    our_odo->odom_msg_.pose.covariance[35] = 0.05;
 
     //linear speed from encoders
     our_odo->odom_msg_.twist.twist.linear.x = linear_vel_x;

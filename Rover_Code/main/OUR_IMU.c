@@ -13,6 +13,7 @@ float AccErrorY = 0.0;
 float GyroErrorX = 0.0;
 float GyroErrorY = 0.0;
 float GyroErrorZ = 0.0;
+float GyroErrorMeanZ = 0.0;
 int c = 0;
 
 sensor_msgs__msg__Imu imu_msg_;
@@ -64,8 +65,8 @@ esp_err_t mpu6050_register_write_byte(uint8_t reg_addr, uint8_t data){
 
 void calculate_IMU_error(void){
     uint8_t data[2];
-
-    while(c < 800){
+    int samples = 80;
+    while(c < samples){
         
         mpu6050_register_read(MPU6050_GYRO_XOUT, data, 2);
         GyroX = (int16_t)((data[0] << 8) | (data[1]));
@@ -79,12 +80,20 @@ void calculate_IMU_error(void){
         GyroErrorZ = GyroErrorZ + (GyroZ / 131.0);
         c++;
     }
-    GyroErrorX = GyroErrorX / 800;
-    GyroErrorY = GyroErrorY / 800;
-    GyroErrorZ = GyroErrorZ / 800;
+    GyroErrorX = GyroErrorX / samples;
+    GyroErrorY = GyroErrorY / samples;
+    GyroErrorZ = GyroErrorZ / samples;
 
     c = 0;
-    while(c < 800){
+    geometry_msgs__msg__Vector3 vel_cal;
+    while(c < samples){
+        vel_cal = readGyroscope();
+        GyroErrorMeanZ += vel_cal.z - GyroErrorZ;
+        c++;
+    }
+    GyroErrorMeanZ = GyroErrorMeanZ / (float) samples;
+    c = 0;
+    while(c < samples){
         mpu6050_register_read(MPU6050_ACCEL_XOUT, data, 2);
         AccX = (int16_t)((data[0] << 8) | data[1]) / 16384.0;
         mpu6050_register_read(MPU6050_ACCEL_YOUT, data, 2);
@@ -97,8 +106,8 @@ void calculate_IMU_error(void){
 
         c++;
     }
-    AccErrorX = AccErrorX / 800;
-    AccErrorY = AccErrorY / 800;
+    AccErrorX = AccErrorX / samples;
+    AccErrorY = AccErrorY / samples;
 
     ESP_LOGI(TAG_IMU, "AccErrorX: %f", AccErrorX);
     ESP_LOGI(TAG_IMU, "AccErrorY: %f", AccErrorY);
@@ -189,7 +198,7 @@ sensor_msgs__msg__Imu getIMUData(){
     imu_msg_.angular_velocity = readGyroscope();
     imu_msg_.angular_velocity.x -= GyroErrorX; 
     imu_msg_.angular_velocity.y -= GyroErrorY; 
-    imu_msg_.angular_velocity.z -= GyroErrorZ; 
+    imu_msg_.angular_velocity.z -= GyroErrorZ - GyroErrorMeanZ; 
 
     if(imu_msg_.angular_velocity.x > -0.01 && imu_msg_.angular_velocity.x < 0.01 )
     imu_msg_.angular_velocity.x = 0; 
@@ -197,7 +206,7 @@ sensor_msgs__msg__Imu getIMUData(){
     if(imu_msg_.angular_velocity.y > -0.01 && imu_msg_.angular_velocity.y < 0.01 )
     imu_msg_.angular_velocity.y = 0;
 
-    if(imu_msg_.angular_velocity.z > -0.01 && imu_msg_.angular_velocity.z < 0.01 )
+    if(imu_msg_.angular_velocity.z > 2 && imu_msg_.angular_velocity.z < 3 )
         imu_msg_.angular_velocity.z = 0;
        
     imu_msg_.angular_velocity_covariance[0] = gyro_cov_;

@@ -30,7 +30,7 @@ void app_main(void)
 
         //ESP_LOGI(TAG_IMU, "Roll: %f Pitch: %f Yaw: %f", main_roll, main_pitch, main_yaw);
         calculate_IMU_error();
-        //vTaskDelay(pdMS_TO_TICKS(100));
+        vTaskDelay(pdMS_TO_TICKS(100));
     }
     
     

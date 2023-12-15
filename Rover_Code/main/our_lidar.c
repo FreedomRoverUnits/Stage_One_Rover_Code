@@ -72,8 +72,11 @@ bool poll_lidar(sensor_msgs__msg__LaserScan * lidar_msg_){
     rpms = 0;
     size_t uart_read_size;
 
+    error_tx = uart_write(test_str);
+
 
     while(!successful_scan){
+    //for(int p = 0; p == did_not_work; p++;)
         uart_read_size = uart_read(data);
             
         if(uart_read_size > 0){
@@ -119,7 +122,6 @@ bool poll_lidar(sensor_msgs__msg__LaserScan * lidar_msg_){
                         lidar_msg_->ranges.data[359-index] = range/1000.0;
                         lidar_msg_->intensities.data[359-index] = intensity;
                     }
-
                 }
             }
             
@@ -140,12 +142,14 @@ bool poll_lidar(sensor_msgs__msg__LaserScan * lidar_msg_){
 
         if(did_not_work >= 5 )
         {
-            did_not_work =0;
+            //did_not_work =0;
             num_reset++;
-            error_tx_end = uart_write(test_str_end);
-            //ESP_LOGI(TAG_LIDAR, "Number of resets of lidar: %d\n Current value of conversions: %d", num_reset, num_of_times_it_made_it);
-            vTaskDelay(5);                      
-            error_tx = uart_write(test_str);
+            //error_tx_end = uart_write(test_str_end);
+            ESP_LOGI(TAG_LIDAR, "Number of resets of lidar: %d\n Current value of conversions: %d", num_reset, num_of_times_it_made_it);
+            vTaskDelay(5);
+            free(data);
+            return false;                      
+            //error_tx = uart_write(test_str);
         }
     }
 

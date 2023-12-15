@@ -62,12 +62,12 @@
 
 //////////////////////// Defines From Lino Config ////////////////////////////////////////
 #define LINO_BASE DIFFERENTIAL_DRIVE       // 2WD and Tracked robot w/ 2 motors
-#define K_P1 0.05                             // P constant
-#define K_I1 0.034                             // I constant34
-#define K_D1 0.0175                             // D constant24
-#define K_P2 0.0411                             // P constant
-#define K_I2 0.03135                            // I constant3135
-#define K_D2 0.0173                             // D constant
+#define K_P1 0.05*4                             // P constant
+#define K_I1 0.034*4                             // I constant34
+#define K_D1 0.0175*4                             // D constant24
+#define K_P2 0.039*4                             // P constant
+#define K_I2 0.03135*4                            // I constant3135
+#define K_D2 0.0173*4                             // D constant
 #define MOTOR_MAX_RPM 250                   // motor's max RPM          
 #define MAX_RPM_RATIO 0.95                  // max RPM allowed for each MAX_RPM_ALLOWED = MOTOR_MAX_RPM * MAX_RPM_RATIO          
 #define MOTOR_OPERATING_VOLTAGE 8          // motor's operating voltage (used to calculate max RPM)
@@ -218,6 +218,8 @@ void app_main(void)
     //setup Kinematics 
     Kinematics_Constructor(&kinematics, LINO_BASE, MOTOR_MAX_RPM, MAX_RPM_RATIO, MOTOR_OPERATING_VOLTAGE, MOTOR_POWER_MAX_VOLTAGE, WHEEL_DIAMETER, LR_WHEELS_DISTANCE);
 
+    vTaskDelay(((TickType_t) 10000) / portTICK_PERIOD_MS);
+
     //setup IMU
     setup_imu();
 
@@ -253,7 +255,7 @@ void update_lidar(){
             //race condition with lidar_msg
             xSemaphoreGive(xSemaphore);
         }
-        vTaskDelay(((TickType_t) 5000) / portTICK_PERIOD_MS);
+        vTaskDelay(((TickType_t) 1000) / portTICK_PERIOD_MS);
     }
 
   	vTaskDelete(NULL);
@@ -317,14 +319,14 @@ bool createEntities()
     //Ends here
         
     // create node
-    RCCHECK(rclc_node_init_default(&node, "linorobot_base_node_brit", "", &support));
+    RCCHECK(rclc_node_init_default(&node, "linorobot_base_node", "", &support));
 
     // create odometry publisher
     RCCHECK(rclc_publisher_init_default( 
         &odom_publisher, 
         &node,
         ROSIDL_GET_MSG_TYPE_SUPPORT(nav_msgs, msg, Odometry),
-        "odom/unfiltered"
+        "agent0/odom/unfiltered"
     ));
 
     // create IMU publisher
@@ -332,7 +334,7 @@ bool createEntities()
         &imu_publisher, 
         &node,
         ROSIDL_GET_MSG_TYPE_SUPPORT(sensor_msgs, msg, Imu),
-        "imu/data"
+        "agent0/imu/data"
     ));
 
     // create Lidar publisher
@@ -342,7 +344,7 @@ bool createEntities()
 		&lidar_publisher,
 		&node,
 		ROSIDL_GET_MSG_TYPE_SUPPORT(sensor_msgs, msg, LaserScan),
-		"scan"));
+		"agent0/can"));
     ESP_LOGI(TAG_LIDAR, "end of creating lidar publisher"); 
     
 
@@ -440,7 +442,7 @@ void moveBase()
     if(check_battery()){
         fullStop();
         led_turn_on();
-        ESP_LOGI(TAG_ERROR, "Battery just ooofffed");
+        // ESP_LOGI(TAG_ERROR, "Battery just ooofffed");
     }
 
     //ESP_LOGI(TAG_ERROR, "Twist: linear x: %lf linear y: %lf angular z: %lf", twist_msg.linear.x, twist_msg.linear.y, twist_msg.angular.z);

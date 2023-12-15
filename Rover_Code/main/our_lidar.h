@@ -28,6 +28,8 @@
 static const char *TAG_LIDAR = "UART Lidar test";
 
 #define BUF_SIZE_U2 (2520)
+// #define BUF_SIZE_U2 (2520 * 2)
+
 
 void uart_setup();
 int uart_read(uint8_t* data);
